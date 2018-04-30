@@ -6,3 +6,4 @@ Path-finding with the use of influence maps, potential implementation of flockin
 	
 # References
 1. [Mechanics of Influence Mapping](http://aigamedev.com/open/tutorial/influence-map-mechanics/)
+2. [Kiting in RTS Games Using Influence Maps](http://nova.wolfwork.com/papers/Kiting_RTS_Influence_Maps.pdf)
