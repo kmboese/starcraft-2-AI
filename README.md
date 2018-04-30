@@ -1,7 +1,8 @@
 # starcraft-2-AI
 AI Implementation for Starcraft 2
 
-Ideas:
-	1. Unit-formation button that puts units into a certain kind of formation 
-	2. AI that chooses a certain kind of timing-attack opening based on race and map
-	3. Trash-talk bot
+# Subject
+Path-finding with the use of influence maps, potential implementation of flocking for more advanced AI pathing.
+	
+# References
+1. [Mechanics of Influence Mapping](http://aigamedev.com/open/tutorial/influence-map-mechanics/)
