@@ -16,8 +16,7 @@ unit location, movement speed, unit size, and neighbor unit movement. There are
 three main methods that are used to provide a flocking implementation:
 
 ### 1. Alignment
-Alignment is a method that makes units in a group face the same direction as other nearby units. This will result in an alignment vector that will be applied to all units in a group. To calculate this, we need to know how many neighbors are within a unit's neighborhood, and we need to know the direction each neighboring unit is facing. We can use the ```facing``` attribute from ```sc2_unit.h``` to get the direction each neighboring unit is facing, and we can 
-
+Alignment is a method that makes units in a group face the same direction as other nearby units. This will result in an alignment vector that will be applied to all units in a group. To calculate this, we need to know how many neighbors are within a unit's neighborhood, and we need to know the direction each neighboring unit is facing. We can use the ```facing``` attribute from ```sc2_unit.h``` to get the direction each neighboring unit is facing. Then we can sum up the movement speeds of units neighboring a given unit, based on the ```radius``` attribute of the unit. It may be necessary to set the neighborhood radius slightly larger than that of the given unit to prevent it from bumping into larger units, like a marine running into a siege tank, for instance.
 ### 2. Cohesion
 
 ### 3. Separation
