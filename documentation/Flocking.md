@@ -71,3 +71,7 @@ Some potential additions that would make our flocking more advanced:
 
 * Z values: take into account the z-axis as well to allow for flying units to flock and to effectively ignore the formation of ground troops below it (since air units and ground units do not collide).
 * Context-sensitivity: there are many situations in-game where we would want to alter the formation of our friendly units based on the enemy units it sees. One of the most fundamental examples of this is Terran marines and Zerg banelings: an intelligent AI would split a flock of marines/other bio units upon seeing a group of banelings close enough to interact with our group of friendly units and cause splash damage. There are potentially hundreds of such scenarios in-game, and it would be a large amount of work to implement even the highest priority of these interactions.
+
+#### References
+1. [3 Simple Rules of Flocking Behaviors](https://gamedevelopment.tutsplus.com/tutorials/3-simple-rules-of-flocking-behaviors-alignment-cohesion-and-separation--gamedev-3444)
+2. [Boids](https://www.red3d.com/cwr/boids/)
