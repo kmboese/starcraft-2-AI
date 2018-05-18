@@ -31,13 +31,15 @@ larger units, like a marine running into a siege tank, for instance.
 
 Once all the unit movement speeds and directions have been summed, we divide
 this summed vector ```v``` by the number of neighboring units, then normalize
-the vector, which we can do using ```Normalize2D()```, defined in ```sc2_common.h```. We will not worry about
+the vector, which we can do using ```Normalize2D()```, defined in
+```sc2_common.h```. We will not worry about
 z-values for units for now, but such functionality could be added if we want
 to have mixed groups of ground and air units in the future.
 ### 2. Cohesion
 To implement cohesion, we can simply collect the x and y positions of all units
 in our defined group, sum up their x and y values, and then divide by the total
-number of units in the group to find a group centroid value. For all units ```unit```  in our group with position ```pos```, we would have 
+number of units in the group to find a group centroid value. For all units
+```unit```  in our group with position ```pos```, we would have:
 ```c++
 for (auto unit : units) {
     sum_x += unit.pos.x;
@@ -51,7 +53,14 @@ normalize(centroid); //normalize the centroid
 ```
 
 ### 3. Separation
-The last step in our basic flocking implementation will be separation, which is the property that prevents units from colliding with neighboring units. To implement this, for each unit ```u``` we will calculate its distance from its neighboring units ```n``` and create a vector from this data that will essentially "push" ```u``` away from its neighbors as it moves to keep units from becoming too tightly packed together. Once again, we can use a pre-defined unit radius to determine which units are considered neighbors of ```u```. We can implement it as follows:
+The last step in our basic flocking implementation will be separation, which is 
+the property that prevents units from colliding with neighboring units. To 
+implement this, for each unit ```u``` we will calculate its distance from its 
+neighboring units ```n``` and create a vector from this data that will 
+essentially "push" ```u``` away from its neighbors as it moves to keep units 
+from becoming too tightly packed together. Once again, we can use a pre-defined 
+unit radius to determine which units are considered neighbors of ```u```. We can
+implement it as follows:
 ```c++
 vector<float> sep_vec{0, 0};
 //Unit u already exists
@@ -65,12 +74,28 @@ sep_vec[0] *= -1;
 ```
 
 ### Summary
-These 3 methods will give us a foundation for a basic flocking implementation using the SC2 C++ API. This will guide how our friendly units move in formation, while influence maps will guide our units away from enemies, and A* will provide the basic routing between 2 points. The combination of all of these techniques should give us a group pathing system that is more robust than the default pathing implementation given in the standard game, and should allow us to better minimize the damage a group of friendly units takes when their path coincides with enemy units.
+These 3 methods will give us a foundation for a basic flocking implementation 
+using the SC2 C++ API. This will guide how our friendly units move in formation, 
+while influence maps will guide our units away from enemies, and A* will provide 
+the basic routing between 2 points. The combination of all of these techniques 
+should give us a group pathing system that is more robust than the default 
+pathing implementation given in the standard game, and should allow us to better 
+minimize the damage a group of friendly units takes when their path coincides 
+with enemy units.
 
 Some potential additions that would make our flocking more advanced:
 
-* Z values: take into account the z-axis as well to allow for flying units to flock and to effectively ignore the formation of ground troops below it (since air units and ground units do not collide).
-* Context-sensitivity: there are many situations in-game where we would want to alter the formation of our friendly units based on the enemy units it sees. One of the most fundamental examples of this is Terran marines and Zerg banelings: an intelligent AI would split a flock of marines/other bio units upon seeing a group of banelings close enough to interact with our group of friendly units and cause splash damage. There are potentially hundreds of such scenarios in-game, and it would be a large amount of work to implement even the highest priority of these interactions.
+* Z values: take into account the z-axis as well to allow for flying units to 
+flock and to effectively ignore the formation of ground troops below it (since 
+air units and ground units do not collide).
+* Context-sensitivity: there are many situations in-game where we would want to 
+alter the formation of our friendly units based on the enemy units it sees. One 
+of the most fundamental examples of this is Terran marines and Zerg banelings: 
+an intelligent AI would split a flock of marines/other bio units upon seeing a 
+group of banelings close enough to interact with our group of friendly units and 
+cause splash damage. There are potentially hundreds of such scenarios in-game, 
+and it would be a large amount of work to implement even the highest priority of 
+these interactions.
 
 #### References
 1. [3 Simple Rules of Flocking Behaviors](https://gamedevelopment.tutsplus.com/tutorials/3-simple-rules-of-flocking-behaviors-alignment-cohesion-and-separation--gamedev-3444)
