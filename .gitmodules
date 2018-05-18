@@ -1,0 +1,15 @@
+[submodule "s2client-api/contrib/civetweb"]
+	path = s2client-api/contrib/civetweb
+	url = https://github.com/Blizzard/civetweb
+[submodule "s2client-api/contrib/protobuf"]
+	path = s2client-api/contrib/protobuf
+	url = https://github.com/google/protobuf
+[submodule "s2client-api/contrib/SDL-mirror"]
+	path = s2client-api/contrib/SDL-mirror
+	url = https://github.com/spurious/SDL-mirror
+[submodule "s2client-api/protocol"]
+	path = s2client-api/protocol
+	url = https://github.com/Blizzard/s2client-proto
+[submodule "s2client-api/contrib/ipv6-parse"]
+	path = s2client-api/contrib/ipv6-parse
+	url = https://github.com/jrepp/ipv6-parse
