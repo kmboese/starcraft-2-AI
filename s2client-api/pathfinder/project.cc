@@ -10,17 +10,19 @@
 #define LINUX_USE_SOFTWARE_RENDER 0
 // How many workers to have built at all times
 #define OPTIMAL_SCV_COUNT 14
-#define OPTIMAL_BARRACKS_COUNT 4
+#define OPTIMAL_BARRACKS_COUNT 6
 // How close we can get to our supply cap before building more supply depots
 #define SUPPLY_BUFFER 6
+//How far away from their position SCV's will build structures
+#define BUILD_RADIUS 5.0f
 //Scale for window rendering
-#define SCALE 70
+#define SCALE 60
 
 using namespace sc2;
 
 const int kMapX = 16*SCALE;
 const int kMapY = 9*SCALE;
-const int kMiniMapX = 200;
+const int kMiniMapX = 220;
 const int kMiniMapY = 200;
 
 class RenderAgent : public Agent {
@@ -32,6 +34,7 @@ public:
     virtual void OnStep() final {
         uint32_t gameLoop = Observation()->GetGameLoop();
 
+        //Periodically print game info
         if (gameLoop % 100 == 0) {
             PrintMinerals();
         }
@@ -51,6 +54,7 @@ public:
             case UNIT_TYPEID::TERRAN_COMMANDCENTER: {
                 if (CountUnitType(UNIT_TYPEID::TERRAN_SCV) < OPTIMAL_SCV_COUNT) {
                     Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_SCV);
+                    std::cout << "Trained SCV\n";
                 }
                 break;
             }
@@ -115,6 +119,7 @@ private:
 
     bool TryBuildStructure(ABILITY_ID ability_type_for_structure, UNIT_TYPEID unit_type = UNIT_TYPEID::TERRAN_SCV) {
         const ObservationInterface* observation = Observation();
+        int unit_count = 0; //How many units are chosen to build structures
 
         // If a unit already is building a supply structure of this type, do nothing.
         // Also get an scv to build the structure.
@@ -137,8 +142,10 @@ private:
 
         Actions()->UnitCommand(unit_to_build,
             ability_type_for_structure,
-            Point2D(unit_to_build->pos.x + rx * 15.0f, unit_to_build->pos.y + ry * 15.0f));
+            Point2D(unit_to_build->pos.x + rx * BUILD_RADIUS, unit_to_build->pos.y + ry * BUILD_RADIUS));
 
+        //Print what building we constructed
+        //std::cout << "Built a " <<  << std::endl;
         return true;
     }
 
