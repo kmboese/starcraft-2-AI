@@ -2,64 +2,196 @@
 #include "sc2utils/sc2_manage_process.h"
 #include "sc2renderer/sc2_renderer.h"
 
+#include "common.h"
+
 #include <iostream>
 // #include <conio.h>
 
 #define LINUX_USE_SOFTWARE_RENDER 0
+// How many workers to have built at all times
+#define OPTIMAL_SCV_COUNT 14
+#define OPTIMAL_BARRACKS_COUNT 4
+// How close we can get to our supply cap before building more supply depots
+#define SUPPLY_BUFFER 6
+
+using namespace sc2;
 
 const int kMapX = 1600;
 const int kMapY = 1200;
 const int kMiniMapX = 600;
 const int kMiniMapY = 600;
 
-class RenderAgent : public sc2::Agent {
+class RenderAgent : public Agent {
 public:
     virtual void OnGameStart() final {
-        sc2::renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
+        renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
     }
 
     virtual void OnStep() final {
-        moveCamera();        
-        render();
+        uint32_t gameLoop = Observation()->GetGameLoop();
+
+        if (gameLoop % 100 == 0) {
+            PrintMinerals();
+        }
+
+        // moveCamera();   
+        TryBuildSupplyDepot();
+        TryBuildBarracks();
+        Render();
     }
 
     virtual void OnGameEnd() final {
-        sc2::renderer::Shutdown();
+        renderer::Shutdown();
+    }
+
+    virtual void OnUnitIdle(const Unit* unit) final {
+        switch (unit->unit_type.ToType()) {
+            case UNIT_TYPEID::TERRAN_COMMANDCENTER: {
+                if (CountUnitType(UNIT_TYPEID::TERRAN_SCV) < OPTIMAL_SCV_COUNT) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_SCV);
+                }
+                break;
+            }
+            case UNIT_TYPEID::TERRAN_SCV: {
+                const Unit* mineral_target = FindNearestMineralPatch(unit->pos);
+                if (!mineral_target) {
+                    break;
+                }
+                Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
+                break;
+            }
+            case UNIT_TYPEID::TERRAN_BARRACKS: {
+                Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_MARINE);
+                break;
+            }
+            case UNIT_TYPEID::TERRAN_MARINE: {
+                const GameInfo& game_info = Observation()->GetGameInfo();
+                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations.front());
+                break;
+            }
+            default: {
+                break;
+            }
+        }
     }
 
 private:
-    // void moveCamera() {
-        // int key = _kbhit();
-        // if (key) {
-            // sc2::Point2DI position(5,5);
-            // sc2::ObserverActionImp observer_action
-            // ActionsFeatureLayer()->CameraMove(position);
-        // }
-    // }
+    // Currently doesn't work
+    void moveCamera() {
+        // const GameInfo& game_info = Observation()->GetGameInfo();
 
-    void render() {
+        // Point2D cameraLocation = Observation()->GetCameraPos();
+        // std::cout << "Camera location: " << cameraLocation.x << " " << cameraLocation.y << std::endl;
+        // Point2D newLocation(cameraLocation.x + 20, cameraLocation.y + 20);
+        // // Point2D target = Observation()->GetStartLocation() + Point2D(3.0f, 3.0f);
+        // Point2DI targetMinimap = ConvertWorldToMinimap(game_info, newLocation);
+        // std::cout << "New Camera location: " << targetMinimap.x << " " << targetMinimap.y << std::endl;
+
+        // ActionsFeatureLayer()->CameraMove(targetMinimap);
+    }
+
+    void PrintMinerals() {
+        std::cout << "Minerals: " << Observation()->GetMinerals() << std::endl;
+    }
+
+    void Render() {
         const SC2APIProtocol::Observation* observation = Observation()->GetRawObservation();
         const SC2APIProtocol::ObservationRender& render =  observation->render_data();
 
         const SC2APIProtocol::ImageData& minimap = render.minimap();
-        sc2::renderer::ImageRGB(&minimap.data().data()[0], minimap.size().x(), minimap.size().y(), 0, std::max(kMiniMapY, kMapY) - kMiniMapY);
+        renderer::ImageRGB(&minimap.data().data()[0], minimap.size().x(), minimap.size().y(), 0, std::max(kMiniMapY, kMapY) - kMiniMapY);
 
         const SC2APIProtocol::ImageData& map = render.map();
-        sc2::renderer::ImageRGB(&map.data().data()[0], map.size().x(), map.size().y(), kMiniMapX, 0);
+        renderer::ImageRGB(&map.data().data()[0], map.size().x(), map.size().y(), kMiniMapX, 0);
 
-        sc2::renderer::Render();
+        renderer::Render();
+    }
+
+    size_t CountUnitType(UNIT_TYPEID unit_type) {
+        return Observation()->GetUnits(Unit::Alliance::Self, IsUnit(unit_type)).size();
+    }
+
+    bool TryBuildStructure(ABILITY_ID ability_type_for_structure, UNIT_TYPEID unit_type = UNIT_TYPEID::TERRAN_SCV) {
+        const ObservationInterface* observation = Observation();
+
+        // If a unit already is building a supply structure of this type, do nothing.
+        // Also get an scv to build the structure.
+        const Unit* unit_to_build = nullptr;
+        Units units = observation->GetUnits(Unit::Alliance::Self);
+        for (const auto& unit : units) {
+            for (const auto& order : unit->orders) {
+                if (order.ability_id == ability_type_for_structure) {
+                    return false;
+                }
+            }
+
+            if (unit->unit_type == unit_type) {
+                unit_to_build = unit;
+            }
+        }
+
+        float rx = GetRandomScalar();
+        float ry = GetRandomScalar();
+
+        Actions()->UnitCommand(unit_to_build,
+            ability_type_for_structure,
+            Point2D(unit_to_build->pos.x + rx * 15.0f, unit_to_build->pos.y + ry * 15.0f));
+
+        return true;
+    }
+
+    bool TryBuildSupplyDepot() {
+        const ObservationInterface* observation = Observation();
+
+        // If we are not supply capped, don't build a supply depot.
+        if (observation->GetFoodUsed() <= observation->GetFoodCap() - SUPPLY_BUFFER)
+            return false;
+
+        // Try and build a depot. Find a random SCV and give it the order.
+        return TryBuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT);
+    }
+
+    const Unit* FindNearestMineralPatch(const Point2D& start) {
+        Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
+        float distance = std::numeric_limits<float>::max();
+        const Unit* target = nullptr;
+        for (const auto& u : units) {
+            if (u->unit_type == UNIT_TYPEID::NEUTRAL_MINERALFIELD) {
+                float d = DistanceSquared2D(u->pos, start);
+                if (d < distance) {
+                    distance = d;
+                    target = u;
+                }
+            }
+        }
+        return target;
+    }
+
+    bool TryBuildBarracks() {
+        const ObservationInterface* observation = Observation();
+
+        if (CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) < 1) {
+            return false;
+        }
+
+        if (CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) > OPTIMAL_BARRACKS_COUNT) {
+            return false;
+        }
+
+        return TryBuildStructure(ABILITY_ID::BUILD_BARRACKS);
     }
 };
 
 int main(int argc, char* argv[]) {
-    sc2::Coordinator coordinator;
+    Coordinator coordinator;
     if (!coordinator.LoadSettings(argc, argv)) {
         std::cout << "Unable to find or parse settings." << std::endl;
         return 1;
     }
 
-    sc2::RenderSettings settings(kMapX, kMapY, kMiniMapX, kMiniMapY);
+    RenderSettings settings(kMapX, kMapY, kMiniMapX, kMiniMapY);
     coordinator.SetRender(settings);
+    // coordinator.SetRealtime(false);
 
 #if defined(__linux__)
 #if LINUX_USE_SOFTWARE_RENDER
@@ -72,16 +204,17 @@ int main(int argc, char* argv[]) {
     RenderAgent bot;
 
     coordinator.SetParticipants({
-        CreateParticipant(sc2::Race::Terran, &bot),
-        CreateComputer(sc2::Race::Zerg)
+        CreateParticipant(Race::Terran, &bot),
+        CreateComputer(Race::Zerg)
     });
+    
 
     // Start the game.
     coordinator.LaunchStarcraft();
-    coordinator.StartGame(sc2::kMapBelShirVestigeLE);
+    coordinator.StartGame(kMapBelShirVestigeLE);
 
     while (coordinator.Update()) {
-        if (sc2::PollKeyPress()) {
+        if (PollKeyPress()) {
             break;
         }
     }
