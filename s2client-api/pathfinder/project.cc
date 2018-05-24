@@ -13,13 +13,15 @@
 #define OPTIMAL_BARRACKS_COUNT 4
 // How close we can get to our supply cap before building more supply depots
 #define SUPPLY_BUFFER 6
+//Scale for window rendering
+#define SCALE 70
 
 using namespace sc2;
 
-const int kMapX = 1600;
-const int kMapY = 1200;
-const int kMiniMapX = 600;
-const int kMiniMapY = 600;
+const int kMapX = 16*SCALE;
+const int kMapY = 9*SCALE;
+const int kMiniMapX = 200;
+const int kMiniMapY = 200;
 
 class RenderAgent : public Agent {
 public:
@@ -34,7 +36,7 @@ public:
             PrintMinerals();
         }
 
-        // moveCamera();   
+        // moveCamera();
         TryBuildSupplyDepot();
         TryBuildBarracks();
         Render();
@@ -197,7 +199,7 @@ int main(int argc, char* argv[]) {
 #if LINUX_USE_SOFTWARE_RENDER
     coordinator.AddCommandLine("-osmesapath /usr/lib/x86_64-linux-gnu/libOSMesa.so");
 #else
-    coordinator.AddCommandLine("-eglpath libEGL.so");
+    coordinator.AddCommandLine("-eglpath /usr/lib/nvidia-384/libEGL.so");
 #endif
 #endif
 
@@ -207,7 +209,7 @@ int main(int argc, char* argv[]) {
         CreateParticipant(Race::Terran, &bot),
         CreateComputer(Race::Zerg)
     });
-    
+
 
     // Start the game.
     coordinator.LaunchStarcraft();
