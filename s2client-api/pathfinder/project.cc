@@ -14,14 +14,16 @@
 // How close we can get to our supply cap before building more supply depots
 #define SUPPLY_BUFFER 6
 //How far away from their position SCV's will build structures
-#define BUILD_RADIUS 5.0f
+#define BUILD_RADIUS 7.5f
 //Scale for window rendering
-#define SCALE 60
-
+//16:9 scale
+//#define SCALE 60
+//4:3 scale
+#define SCALE 240
 using namespace sc2;
 
-const int kMapX = 16*SCALE;
-const int kMapY = 9*SCALE;
+const int kMapX = 4*SCALE;
+const int kMapY = 3*SCALE;
 const int kMiniMapX = 220;
 const int kMiniMapY = 200;
 
@@ -126,23 +128,39 @@ private:
         const Unit* unit_to_build = nullptr;
         Units units = observation->GetUnits(Unit::Alliance::Self);
         for (const auto& unit : units) {
-            for (const auto& order : unit->orders) {
-                if (order.ability_id == ability_type_for_structure) {
-                    return false;
-                }
-            }
-
+            //Select SCV
             if (unit->unit_type == unit_type) {
                 unit_to_build = unit;
+                //Skip SCV if it is already building the structure
+                for (const auto& order : unit->orders) {
+                    if (order.ability_id == ability_type_for_structure) {
+                        return false;
+                    }
+                }
+                break;
             }
+
+
         }
 
         float rx = GetRandomScalar();
         float ry = GetRandomScalar();
 
+        //Don't build buildings near minerals
+        float mineral_threshold = 3.0f;
+        const Unit* nearest_minerals = FindNearestMineralPatch(unit_to_build->pos);
+        Point2D build_location {unit_to_build->pos.x + rx*BUILD_RADIUS, unit_to_build->pos.y + ry*BUILD_RADIUS};
+        while (DistanceSquared2D(build_location, nearest_minerals->pos) < mineral_threshold) {
+            rx = GetRandomScalar();
+            ry = GetRandomScalar();
+            build_location.x = unit_to_build->pos.x + rx*BUILD_RADIUS;
+            build_location.y = unit_to_build->pos.y + ry*BUILD_RADIUS;
+            nearest_minerals = FindNearestMineralPatch(unit_to_build->pos);
+        }
+
         Actions()->UnitCommand(unit_to_build,
             ability_type_for_structure,
-            Point2D(unit_to_build->pos.x + rx * BUILD_RADIUS, unit_to_build->pos.y + ry * BUILD_RADIUS));
+            Point2D(unit_to_build->pos.x + rx*BUILD_RADIUS, unit_to_build->pos.y + ry*BUILD_RADIUS));
 
         //Print what building we constructed
         //std::cout << "Built a " <<  << std::endl;
