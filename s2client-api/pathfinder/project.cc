@@ -147,7 +147,7 @@ private:
         float ry = GetRandomScalar();
 
         //Don't build buildings near minerals
-        float mineral_threshold = 3.0f;
+        float mineral_threshold = 5.0f;
         const Unit* nearest_minerals = FindNearestMineralPatch(unit_to_build->pos);
         Point2D build_location {unit_to_build->pos.x + rx*BUILD_RADIUS, unit_to_build->pos.y + ry*BUILD_RADIUS};
         while (DistanceSquared2D(build_location, nearest_minerals->pos) < mineral_threshold) {
