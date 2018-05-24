@@ -68,6 +68,7 @@ public:
                 Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
                 break;
             }
+            //Train marines in groups (wait until we have a pool of resources to begin building)
             case UNIT_TYPEID::TERRAN_BARRACKS: {
                 Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_MARINE);
                 break;
@@ -131,7 +132,7 @@ private:
             //Select SCV
             if (unit->unit_type == unit_type) {
                 unit_to_build = unit;
-                //Skip SCV if it is already building the structure
+                //if an SCV is currently building this structure, don't build it
                 for (const auto& order : unit->orders) {
                     if (order.ability_id == ability_type_for_structure) {
                         return false;
