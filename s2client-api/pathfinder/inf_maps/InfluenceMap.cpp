@@ -51,9 +51,29 @@ void InfluenceMap::createSource(int x, int y, float rad) {
 
 void InfluenceMap::propagate(float momentum, float decay, float frequency) {
     for (int i = 0; i < sources.size(); ++i) {
-        
+        /*
+         * Possible exponential equation:
+         * 
+         * calculated_inf = inf[curr_cell] * 
+         *  exponentialFunc(-cell.distance_from_center * decay)
+         * 
+         * pseudocode:
+         * 
+         *  For every source on the map:
+         *      Create new influence values based on the 3 parameters using
+         *          exponential equation above
+         *      New influence value is the max of the calculated value and a
+         *          global maximum influence value
+         *      Use linear interpolation to "blend" the values using the 
+         *          momentum parameter
+         *      inf[cell] = new interpolated value
+         */ 
     }
 } // end propagate()
+
+int InfluenceMap::getNumSources() {
+    return sources.size();
+}
 
 void InfluenceMap::printMap() const {
 

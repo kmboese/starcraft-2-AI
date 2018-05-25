@@ -49,7 +49,11 @@ public:
      *  Stores sources in private vector of sources.
      */ 
     void createSource(int x, int y, float rad);
-    
+
+    /*
+     *  @calcOverlap: A source's influence can overlap with another source's 
+     *      influence. When this happens, add these values.
+     */ 
     void calcOverlap();
 
     /*
@@ -64,15 +68,22 @@ public:
      */ 
     void propagate(float momentum, float decay, float frequency);
 
+    /*
+     *
+     */ 
+    float linearInterpolation(float momentum);
+
+    /*
+     *
+     */ 
     void updateMap();
-    void destroyMap();
 
     /* 
      *  @printMap: Prints entire 2D grid with delimiters. Used for debugging.
      */ 
     void printMap() const;
 
-    static int getNumSources();
+    int getNumSources();
 private:
     std::vector<std::vector <float>> map;
     std::vector<InfluenceSource> sources;
