@@ -118,9 +118,6 @@ if (MSVC)
     set_source_files_properties(${protobuf_SHARED_OR_STATIC} PROPERTIES COMPILE_FLAGS "/W0")
     set_source_files_properties(${libprotobuf_lite_files} PROPERTIES COMPILE_FLAGS "/W0")
     add_definitions(-D_SCL_SECURE_NO_WARNINGS)
-
-    #User Added
-    #set_target_properties(${project_name} PROPERTIES LINK_FLAGS "/NODEFAULTLIB:libcmt;libconcrt")
 endif (MSVC)
 
 # Exclude SDL and related projects to work around linker issue.
