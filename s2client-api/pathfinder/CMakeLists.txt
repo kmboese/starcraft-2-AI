@@ -17,7 +17,9 @@ function (pathfinder_project_extra project_name source_code extra_libs)
     set_target_properties(${project_name} PROPERTIES FOLDER pathfinder)
 
 	if (MSVC)
-		# set_target_properties(${project_name} PROPERTIES LINK_FLAGS "/NODEFAULTLIB:libcmt;libconcrt")
+        message("NODEFAULTLIB command reached")
+		#set_target_properties(${project_name} PROPERTIES LINK_FLAGS "/NODEFAULTLIB:libcmt;libconcrt")
+        set_target_properties(${project_name} PROPERTIES LINK_FLAGS "/NODEFAULTLIB:libcmt")
 	endif ()
 
 	if (MSCV AND (NOT (MSVC_VERSION LESS 1910)))
