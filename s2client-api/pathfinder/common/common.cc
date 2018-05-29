@@ -172,6 +172,19 @@ const Unit* PathingBot::FindNearestMineralPatch(const Point2D& start) {
     return target;
 }
 
+const Units* PathingBot::SelectMarines() {
+    //Get all friendly units
+    Units units = Observation()->GetUnits(Unit::Alliance::Ally);
+    //vector to hold all selected marines
+    Units marines{};
+    //Select all marines from our friendly units
+    for (const auto& u : units) {
+        if (u->unit_type == UNIT_TYPEID::TERRAN_MARINE) {
+            marines.push_back(u);
+        }
+    }
+}
+
 bool PathingBot::TryBuildBarracks() {
     const ObservationInterface* observation = Observation();
 

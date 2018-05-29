@@ -4,7 +4,7 @@
 #include "sc2renderer/sc2_renderer.h"
 
 
-#define LINUX_USE_SOFTWARE_RENDER 1
+#define LINUX_USE_SOFTWARE_RENDER 0
 // How many workers to have built at all times
 #define OPTIMAL_SCV_COUNT 14
 #define OPTIMAL_BARRACKS_COUNT 6
@@ -32,6 +32,7 @@ private:
     bool TryBuildStructure(ABILITY_ID ability_type_for_structure, UNIT_TYPEID unit_type = UNIT_TYPEID::TERRAN_SCV);
     bool TryBuildSupplyDepot();
     const Unit* FindNearestMineralPatch(const Point2D& start);
+    const Units* SelectMarines();
     bool TryBuildBarracks();
 };
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world);
