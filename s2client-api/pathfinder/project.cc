@@ -225,10 +225,12 @@ int main(int argc, char* argv[]) {
         std::cout << "Unable to find or parse settings." << std::endl;
         return 1;
     }
+    //Set game to run realtime (capped framerate) or uncapped
+    coordinator.SetRealtime(false);
 
     //RenderSettings settings(kMapX, kMapY, kMiniMapX, kMiniMapY);
     //coordinator.SetRender(settings);
-    // coordinator.SetRealtime(false);
+    
 
     //Test
     HelloWorld();
@@ -247,9 +249,6 @@ int main(int argc, char* argv[]) {
         CreateParticipant(Race::Terran, &bot),
         CreateComputer(Race::Zerg)
         });
-
-    //Make the game run at a capped framerate
-    coordinator.SetRealtime(true);
 
 
     // Start the game.
