@@ -59,10 +59,7 @@ void PathingBot::OnStep() {
     // moveCamera();
     TryBuildSupplyDepot();
     TryBuildBarracks();
-    /*
-    //Temporarily removed Render()
     Render();
-    */
 }
 
 void PathingBot::OnGameEnd() {
@@ -214,7 +211,6 @@ void PathingBot::MoveCamera() {
 }
 
 //Not used
-/*
 void PathingBot::Render() {
     const SC2APIProtocol::Observation* observation = Observation()->GetRawObservation();
     const SC2APIProtocol::ObservationRender& render = observation->render_data();
@@ -227,7 +223,6 @@ void PathingBot::Render() {
 
     renderer::Render();
 }
-*/
 
 
 }
