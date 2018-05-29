@@ -14,7 +14,7 @@
 // How close we can get to our supply cap before building more supply depots
 #define SUPPLY_BUFFER 6
 //How far away from their position SCV's will build structures
-#define BUILD_RADIUS 7.5f
+#define BUILD_RADIUS 15.0f
 //Scale for window rendering
 //16:9 scale
 //#define SCALE 60
@@ -217,8 +217,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    RenderSettings settings(kMapX, kMapY, kMiniMapX, kMiniMapY);
-    coordinator.SetRender(settings);
+    //RenderSettings settings(kMapX, kMapY, kMiniMapX, kMiniMapY);
+    //coordinator.SetRender(settings);
     // coordinator.SetRealtime(false);
 
 #if defined(__linux__)
@@ -235,6 +235,9 @@ int main(int argc, char* argv[]) {
         CreateParticipant(Race::Terran, &bot),
         CreateComputer(Race::Zerg)
     });
+
+    //Make the game run at a capped framerate
+    coordinator.SetRealtime(true);
 
 
     // Start the game.
