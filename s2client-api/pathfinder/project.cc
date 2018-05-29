@@ -3,9 +3,12 @@
 #include "sc2renderer/sc2_renderer.h"
 
 #include "common.h"
+#include "flocking.h"
 
 #include <iostream>
 // #include <conio.h>
+
+
 
 #define LINUX_USE_SOFTWARE_RENDER 0
 // How many workers to have built at all times
@@ -20,12 +23,13 @@
 //#define SCALE 60
 //4:3 scale
 #define SCALE 240
-using namespace sc2;
 
 const int kMapX = 4*SCALE;
 const int kMapY = 3*SCALE;
 const int kMiniMapX = 220;
 const int kMiniMapY = 200;
+
+using namespace sc2;
 
 class RenderAgent : public Agent {
 public:
@@ -44,7 +48,10 @@ public:
         // moveCamera();
         TryBuildSupplyDepot();
         TryBuildBarracks();
+        /*
+        //Temporarily removed Render()
         Render();
+        */
     }
 
     virtual void OnGameEnd() final {
@@ -53,34 +60,34 @@ public:
 
     virtual void OnUnitIdle(const Unit* unit) final {
         switch (unit->unit_type.ToType()) {
-            case UNIT_TYPEID::TERRAN_COMMANDCENTER: {
-                if (CountUnitType(UNIT_TYPEID::TERRAN_SCV) < OPTIMAL_SCV_COUNT) {
-                    Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_SCV);
-                    std::cout << "Trained SCV\n";
-                }
+        case UNIT_TYPEID::TERRAN_COMMANDCENTER: {
+            if (CountUnitType(UNIT_TYPEID::TERRAN_SCV) < OPTIMAL_SCV_COUNT) {
+                Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_SCV);
+                std::cout << "Trained SCV\n";
+            }
+            break;
+        }
+        case UNIT_TYPEID::TERRAN_SCV: {
+            const Unit* mineral_target = FindNearestMineralPatch(unit->pos);
+            if (!mineral_target) {
                 break;
             }
-            case UNIT_TYPEID::TERRAN_SCV: {
-                const Unit* mineral_target = FindNearestMineralPatch(unit->pos);
-                if (!mineral_target) {
-                    break;
-                }
-                Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
-                break;
-            }
-            //Train marines in groups (wait until we have a pool of resources to begin building)
-            case UNIT_TYPEID::TERRAN_BARRACKS: {
-                Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_MARINE);
-                break;
-            }
-            case UNIT_TYPEID::TERRAN_MARINE: {
-                const GameInfo& game_info = Observation()->GetGameInfo();
-                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations.front());
-                break;
-            }
-            default: {
-                break;
-            }
+            Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
+            break;
+        }
+                                        //Train marines in groups (wait until we have a pool of resources to begin building)
+        case UNIT_TYPEID::TERRAN_BARRACKS: {
+            Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_MARINE);
+            break;
+        }
+        case UNIT_TYPEID::TERRAN_MARINE: {
+            const GameInfo& game_info = Observation()->GetGameInfo();
+            Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations.front());
+            break;
+        }
+        default: {
+            break;
+        }
         }
     }
 
@@ -103,9 +110,10 @@ private:
         std::cout << "Minerals: " << Observation()->GetMinerals() << std::endl;
     }
 
+    /*
     void Render() {
         const SC2APIProtocol::Observation* observation = Observation()->GetRawObservation();
-        const SC2APIProtocol::ObservationRender& render =  observation->render_data();
+        const SC2APIProtocol::ObservationRender& render = observation->render_data();
 
         const SC2APIProtocol::ImageData& minimap = render.minimap();
         renderer::ImageRGB(&minimap.data().data()[0], minimap.size().x(), minimap.size().y(), 0, std::max(kMiniMapY, kMapY) - kMiniMapY);
@@ -115,6 +123,7 @@ private:
 
         renderer::Render();
     }
+    */
 
     size_t CountUnitType(UNIT_TYPEID unit_type) {
         return Observation()->GetUnits(Unit::Alliance::Self, IsUnit(unit_type)).size();
@@ -150,18 +159,18 @@ private:
         //Don't build buildings near minerals
         float mineral_threshold = 5.0f;
         const Unit* nearest_minerals = FindNearestMineralPatch(unit_to_build->pos);
-        Point2D build_location {unit_to_build->pos.x + rx*BUILD_RADIUS, unit_to_build->pos.y + ry*BUILD_RADIUS};
+        Point2D build_location{ unit_to_build->pos.x + rx * BUILD_RADIUS, unit_to_build->pos.y + ry * BUILD_RADIUS };
         while (DistanceSquared2D(build_location, nearest_minerals->pos) < mineral_threshold) {
             rx = GetRandomScalar();
             ry = GetRandomScalar();
-            build_location.x = unit_to_build->pos.x + rx*BUILD_RADIUS;
-            build_location.y = unit_to_build->pos.y + ry*BUILD_RADIUS;
+            build_location.x = unit_to_build->pos.x + rx * BUILD_RADIUS;
+            build_location.y = unit_to_build->pos.y + ry * BUILD_RADIUS;
             nearest_minerals = FindNearestMineralPatch(unit_to_build->pos);
         }
 
         Actions()->UnitCommand(unit_to_build,
             ability_type_for_structure,
-            Point2D(unit_to_build->pos.x + rx*BUILD_RADIUS, unit_to_build->pos.y + ry*BUILD_RADIUS));
+            Point2D(unit_to_build->pos.x + rx * BUILD_RADIUS, unit_to_build->pos.y + ry * BUILD_RADIUS));
 
         //Print what building we constructed
         //std::cout << "Built a " <<  << std::endl;
@@ -221,6 +230,9 @@ int main(int argc, char* argv[]) {
     //coordinator.SetRender(settings);
     // coordinator.SetRealtime(false);
 
+    //Test
+    HelloWorld();
+
 #if defined(__linux__)
 #if LINUX_USE_SOFTWARE_RENDER
     coordinator.AddCommandLine("-osmesapath /usr/lib/x86_64-linux-gnu/libOSMesa.so");
@@ -234,7 +246,7 @@ int main(int argc, char* argv[]) {
     coordinator.SetParticipants({
         CreateParticipant(Race::Terran, &bot),
         CreateComputer(Race::Zerg)
-    });
+        });
 
     //Make the game run at a capped framerate
     coordinator.SetRealtime(true);

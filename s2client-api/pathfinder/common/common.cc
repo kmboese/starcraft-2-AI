@@ -1,14 +1,17 @@
 #include "common.h"
 #include <iostream>
 
+//Original
+//using namespace sc2;
+namespace sc2 {
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) {
     int image_width = game_info.options.feature_layer.minimap_resolution_x;
     int image_height = game_info.options.feature_layer.minimap_resolution_y;
     float map_width = (float)game_info.width;
     float map_height = (float)game_info.height;
-        std::cout <<  "Map " << game_info.map_name << std::endl;
-    std::cout <<  "Width " << game_info.options.feature_layer.minimap_resolution_x << std::endl;
-        std::cout << "Height: " << game_info.options.feature_layer.minimap_resolution_y << std::endl;
+    std::cout << "Map " << game_info.map_name << std::endl;
+    std::cout << "Width " << game_info.options.feature_layer.minimap_resolution_x << std::endl;
+    std::cout << "Height: " << game_info.options.feature_layer.minimap_resolution_y << std::endl;
 
 
     // Pixels always cover a square amount of world space. The scale is determined
@@ -27,4 +30,5 @@ Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) 
     int image_y = static_cast<int>((image_relative_y / pixel_size));
 
     return Point2DI(image_x, image_y);
+}
 }
