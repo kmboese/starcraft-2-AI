@@ -253,7 +253,8 @@ int main(int argc, char* argv[]) {
 
     // Start the game.
     coordinator.LaunchStarcraft();
-    coordinator.StartGame(kMapBelShirVestigeLE);
+    //coordinator.StartGame(kMapBelShirVestigeLE);
+    coordinator.StartGame("D:\\Games\\Starcraft II\\StarCraft II\\Maps\\Melee\\Simple64.SC2Map");
 
     while (coordinator.Update()) {
         if (PollKeyPress()) {
