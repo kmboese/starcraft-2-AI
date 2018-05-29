@@ -83,7 +83,7 @@ void PathingBot::OnUnitIdle(const Unit* unit) {
             Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
             break;
         }
-                                      //Train marines in groups (wait until we have a pool of resources to begin building)
+        //Train marines in groups (wait until we have a pool of resources to begin building)
         case UNIT_TYPEID::TERRAN_BARRACKS: {
             Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_MARINE);
             break;

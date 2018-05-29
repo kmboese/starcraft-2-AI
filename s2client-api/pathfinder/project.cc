@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
     //coordinator.StartGame(sc2::kMapBelShirVestigeLE);
     //coordinator.StartGame("D:\\Games\\Starcraft II\\StarCraft II\\Maps\\Melee\\Simple64.SC2Map");
     //Use this as baseline map for pathing marines
-    coordinator.StartGame("DefeatRoaches.SC2Map");
+    coordinator.StartGame("mini_games/DefeatRoaches.SC2Map");
 
     while (coordinator.Update()) {
         if (sc2::PollKeyPress()) {

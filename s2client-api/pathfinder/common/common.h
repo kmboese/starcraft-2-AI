@@ -4,7 +4,7 @@
 #include "sc2renderer/sc2_renderer.h"
 
 
-#define LINUX_USE_SOFTWARE_RENDER 0
+#define LINUX_USE_SOFTWARE_RENDER 1
 // How many workers to have built at all times
 #define OPTIMAL_SCV_COUNT 14
 #define OPTIMAL_BARRACKS_COUNT 6
