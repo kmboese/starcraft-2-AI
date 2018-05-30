@@ -40,5 +40,6 @@ const char* kMapEmpty            = "Test/Empty.SC2Map";
 const char* kMapEmptyLong        = "Test/EmptyLong.SC2Map";
 const char* kMapEmptyTall        = "Test/EmptyTall.SC2Map";
 const char* kMapMarineMicro      = "Example/MarineMicro.SC2Map";
+const char* kMapPathfinder       = "Project/Pathfinder.SC2Map";
 
 }
