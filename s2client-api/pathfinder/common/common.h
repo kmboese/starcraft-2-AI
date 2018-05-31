@@ -31,9 +31,13 @@ private:
 
     bool TryBuildStructure(ABILITY_ID ability_type_for_structure, UNIT_TYPEID unit_type = UNIT_TYPEID::TERRAN_SCV);
     bool TryBuildSupplyDepot();
-    const Unit* FindNearestMineralPatch(const Point2D& start);
+    
     Units* SelectMarines();
     bool TryBuildBarracks();
+
+    //Location Functions
+    const Unit* FindNearestMineralPatch(const Point2D& start);
+    Point2D GetMapCenter();
 };
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world);
 }

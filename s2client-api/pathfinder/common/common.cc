@@ -44,22 +44,46 @@ Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) 
     return Point2DI(image_x, image_y);
 }
 
+Point2D PathingBot::GetMapCenter() {
+    const GameInfo& game_info = Observation()->GetGameInfo();
+    Point2D center{};
+    center.x = game_info.playable_max.x / 2;
+    center.y = game_info.playable_max.y / 2;
+    return center;
+}
+
 void PathingBot::OnGameStart() {
-    renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
+    const ObservationInterface* observation = Observation();
+    const GameInfo& game_info = Observation()->GetGameInfo();
+    uint32_t gameLoop = observation->GetGameLoop();
+    //renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
+
+    //Select all marines
+    Units marines = observation->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+    //Move all marines to the center of the map
+    for (const auto &marine : marines) {
+        Point2D center = GetMapCenter();
+        //Actions()->UnitCommand(marine, ABILITY_ID::MOVE, game_info.playable_max);
+        Actions()->UnitCommand(marine, ABILITY_ID::MOVE, center);
+    }
 }
 
 void PathingBot::OnStep() {
-    uint32_t gameLoop = Observation()->GetGameLoop();
+    const ObservationInterface* observation = Observation();
+    const GameInfo& game_info = Observation()->GetGameInfo();
+    uint32_t gameLoop = observation->GetGameLoop();
 
+    /*
     //Periodically print game info
     if (gameLoop % 100 == 0) {
         PrintMinerals();
     }
+    */
 
     // moveCamera();
-    TryBuildSupplyDepot();
-    TryBuildBarracks();
-    Render();
+    //TryBuildSupplyDepot();
+    //TryBuildBarracks();
+    //Render();
 }
 
 void PathingBot::OnGameEnd() {
@@ -90,7 +114,7 @@ void PathingBot::OnUnitIdle(const Unit* unit) {
         }
         case UNIT_TYPEID::TERRAN_MARINE: {
             const GameInfo& game_info = Observation()->GetGameInfo();
-            Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations.front());
+            //Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations.front());
             break;
         }
         default: {
