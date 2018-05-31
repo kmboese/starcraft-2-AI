@@ -74,8 +74,7 @@ void PathingBot::OnGameStart() {
         std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
     }
     //Pick a leader
-    unsigned int unit_index = GetRandomInteger(0, marines.size() - 1);
-    leader = marines[unit_index];
+    leader = SelectLeader(marines);
     Flock(this, marines, leader, playable_max);
 
     //Get all marines' locations
@@ -92,6 +91,9 @@ void PathingBot::OnStep() {
     Units marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
     if (game_loop % 10 == 0) {
         Flock(this, marines, leader, playable_max);
+        //Print centroid location
+        std::cout << "Centroid location: (" << GetCentroid(marines).x << "," << GetCentroid(marines).y
+            << ")\n";
     }
     /*
     //Move all marines to the center of the map
@@ -153,6 +155,31 @@ void PathingBot::OnUnitIdle(const Unit* unit) {
             break;
         }
     }
+}
+
+const Unit* PathingBot::SelectLeader(const Units& units) {
+    if (units.size() == 0) {
+        return nullptr;
+    }
+    const Unit *leader = nullptr;
+    leader = units[unsigned int(GetRandomInteger(0, units.size() - 1))];
+    return leader;
+}
+
+Point2D PathingBot::GetCentroid(const Units& units) {
+    Point2D centroid{0.0, 0.0};
+    if (units.size() == 0) {
+        return centroid;
+    }
+    //Sum up all unit x and y positions
+    for (const auto &unit : units) {
+        centroid.x += unit->pos.x;
+        centroid.y += unit->pos.y;
+    }
+    //Divide centroid location by total number of units
+    centroid.x /= units.size();
+    centroid.y /= units.size();
+    return centroid;
 }
 
 /*Attempt to build a given structure

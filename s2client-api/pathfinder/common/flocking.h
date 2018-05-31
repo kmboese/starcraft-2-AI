@@ -4,7 +4,15 @@
 
 namespace sc2 {
 
-//Flocks a given group of units
-bool Flock(Agent *bot, const Units &units, const Unit *leader, const Point2D &boundary_point);
+/*
+ * Runs the flocking algorithm on a group of units.
+ * Arguments:
+    * bot: pointer to the bot agent to get access to game observations
+    * units: Group of units on which to run the flocking algorithm
+    * leader: The lead unit of the group
+    * move_point: The point to which the leader moves initially
+ * Returns: true if the algorithm succeeds, false otherwise.
+*/
+bool Flock(Agent *bot, const Units &units, const Unit *leader, const Point2D &move_point);
 
 }

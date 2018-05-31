@@ -31,13 +31,22 @@ private:
 
     bool TryBuildStructure(ABILITY_ID ability_type_for_structure, UNIT_TYPEID unit_type = UNIT_TYPEID::TERRAN_SCV);
     bool TryBuildSupplyDepot();
-    
+
+    //Unit Selection Functions
+    /*
+        * Selects one random unit from a group of units to be the group leader
+        * Returns: a pointer to the leader Unit 
+    */
+    const Unit* SelectLeader(const Units& units);
     Units* SelectMarines();
     bool TryBuildBarracks();
 
     //Location Functions
     const Unit* FindNearestMineralPatch(const Point2D& start);
+    //Returns the center point of the playable map space
     Point2D GetMapCenter();
+    //Returns the center point of a group of units
+    Point2D GetCentroid(const Units &units);
 };
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world);
 }
