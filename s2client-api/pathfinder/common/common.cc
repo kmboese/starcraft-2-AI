@@ -15,7 +15,8 @@ const int kMapY = 3 * SCALE;
 const int kMiniMapX = 220;
 const int kMiniMapY = 200;
 
-const sc2::Unit *leader;
+const sc2::Unit *leader; //global group leader
+float group_health = 0.0; //group health
 
 //Original
 //using namespace sc2;
@@ -58,8 +59,16 @@ void PathingBot::OnGameStart() {
     Point2D playable_max = game_info.playable_max;
     //renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
 
+    
+
     //Select all marines
     Units marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+
+    //Get the initial group health
+    for (const auto &marine : marines) {
+        group_health += marine->health;
+    }
+
     //Move all marines to the center of the map on startup
     for (const auto &marine : marines) {
         //Point2D rand = {center.x + GetRandomInteger(1,10), center.y + GetRandomInteger(1,10)};
@@ -69,7 +78,7 @@ void PathingBot::OnGameStart() {
     }
     //Pick a leader and flock units on initialization
     leader = SelectLeader(marines);
-    //Flock(this, marines, leader, GetMapCenter());
+    Flock(this, marines, leader, playable_max);
 
     //Get all marines' locations
 }
@@ -78,26 +87,39 @@ void PathingBot::OnStep() {
     const ObservationInterface* obs = Observation();
     const GameInfo& game_info = obs->GetGameInfo();
     uint32_t game_loop = obs->GetGameLoop();
-    uint32_t loop_frequency = 30; //How often we run our algorithm
+    uint32_t pathing_freq = 30; //How often we run our algorithm
+    uint32_t info_freq = pathing_freq; //How often we print game info
+    uint32_t update_freq = pathing_freq; //How often we update game info
     Point2D playable_max = game_info.playable_max; //maximum playable Point on the map
     Point2D center = GetMapCenter();
     float radius = 2.0; //Radius threshold for IsNear(), 2.0 is a pretty good value
 
-    //Select all marines
     Units marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
-    if (game_loop % loop_frequency == 0) {
+    //Path units
+    if (game_loop % pathing_freq == 0) {
         for (const auto& marine : marines) {
-            //Move units to the center if they are not "near" the center
-            if (!IsNear(marine, center, radius)) {
+            //Move units to the center if they are not "near" the center, and not the leader
+            if (!IsNear(marine, center, radius) && (marine != leader)) {
                 Actions()->UnitCommand(marine, ABILITY_ID::MOVE, center);
             }
         }
-        
         //Flock(this, marines, leader, GetMapCenter());
-        //Print centroid location
+    }
+    //Update info
+    if (game_loop % update_freq == 0) {
+        group_health = 0.0;
+        for (const auto& marine : marines) {
+            group_health += marine->health;
+        }
+    }
+    //Print Info
+    if (game_loop % info_freq == 0) {
+        //Print game info
         std::cout << "Centroid location: (" << GetCentroid(marines).x << "," << GetCentroid(marines).y
             << ")\n";
+        std::cout << "Group health: " << group_health << "\n";
     }
+    
     /*
     //Move all marines to the center of the map
     for (const auto &marine : marines) {
@@ -165,7 +187,7 @@ const Unit* PathingBot::SelectLeader(const Units& units) {
         return nullptr;
     }
     const Unit *leader = nullptr;
-    leader = units[unsigned int(GetRandomInteger(0, units.size() - 1))];
+    leader = units[(GetRandomInteger(0, int(units.size()) - 1))];
     return leader;
 }
 
