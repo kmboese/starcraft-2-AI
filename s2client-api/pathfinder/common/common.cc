@@ -51,8 +51,6 @@ Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) 
     return Point2DI(image_x, image_y);
 }
 
-
-
 void PathingBot::OnGameStart() {
     const ObservationInterface* obs = Observation();
     const GameInfo& game_info = obs->GetGameInfo();
@@ -153,26 +151,6 @@ void PathingBot::OnGameEnd() {
 
 void PathingBot::OnUnitIdle(const Unit* unit) {
     switch (unit->unit_type.ToType()) {
-        case UNIT_TYPEID::TERRAN_COMMANDCENTER: {
-            if (CountUnitType(UNIT_TYPEID::TERRAN_SCV) < OPTIMAL_SCV_COUNT) {
-                Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_SCV);
-                std::cout << "Trained SCV\n";
-            }
-            break;
-        }
-        case UNIT_TYPEID::TERRAN_SCV: {
-            const Unit* mineral_target = FindNearestMineralPatch(unit->pos);
-            if (!mineral_target) {
-                break;
-            }
-            Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
-            break;
-        }
-        //Train marines in groups (wait until we have a pool of resources to begin building)
-        case UNIT_TYPEID::TERRAN_BARRACKS: {
-            Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_MARINE);
-            break;
-        }
         case UNIT_TYPEID::TERRAN_MARINE: {
             const GameInfo& game_info = Observation()->GetGameInfo();
             //Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations.front());
@@ -236,131 +214,12 @@ float PathingBot::GetGroupHealth(const Units& units) {
     return health;
 }
 
-/*Attempt to build a given structure
- * Note: default argument can only be given in header declaration
-*/
-bool PathingBot::TryBuildStructure(ABILITY_ID ability_type_for_structure, UNIT_TYPEID unit_type) {
-    const ObservationInterface* observation = Observation();
-    int unit_count = 0; //How many units are chosen to build structures
-
-                        // If a unit already is building a supply structure of this type, do nothing.
-                        // Also get an scv to build the structure.
-    const Unit* unit_to_build = nullptr;
-    Units units = observation->GetUnits(Unit::Alliance::Self);
-    for (const auto& unit : units) {
-        //Select SCV
-        if (unit->unit_type == unit_type) {
-            unit_to_build = unit;
-            //if an SCV is currently building this structure, don't build it
-            for (const auto& order : unit->orders) {
-                if (order.ability_id == ability_type_for_structure) {
-                    return false;
-                }
-            }
-            break;
-        }
-    }
-
-    float rx = GetRandomScalar();
-    float ry = GetRandomScalar();
-
-    //Don't build buildings near minerals
-    float mineral_threshold = 5.0f;
-    const Unit* nearest_minerals = FindNearestMineralPatch(unit_to_build->pos);
-    Point2D build_location{ unit_to_build->pos.x + rx * BUILD_RADIUS, unit_to_build->pos.y + ry * BUILD_RADIUS };
-    while (DistanceSquared2D(build_location, nearest_minerals->pos) < mineral_threshold) {
-        rx = GetRandomScalar();
-        ry = GetRandomScalar();
-        build_location.x = unit_to_build->pos.x + rx * BUILD_RADIUS;
-        build_location.y = unit_to_build->pos.y + ry * BUILD_RADIUS;
-        nearest_minerals = FindNearestMineralPatch(unit_to_build->pos);
-    }
-
-    Actions()->UnitCommand(unit_to_build,
-        ability_type_for_structure,
-        Point2D(unit_to_build->pos.x + rx * BUILD_RADIUS, unit_to_build->pos.y + ry * BUILD_RADIUS));
-    return true;
-}
-
-bool PathingBot::TryBuildSupplyDepot() {
-    const ObservationInterface* observation = Observation();
-
-    // If we are not supply capped, don't build a supply depot.
-    if (observation->GetFoodUsed() <= observation->GetFoodCap() - SUPPLY_BUFFER)
-        return false;
-
-    // Try and build a depot. Find a random SCV and give it the order.
-    return TryBuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT);
-}
-
-const Unit* PathingBot::FindNearestMineralPatch(const Point2D& start) {
-    Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
-    float distance = std::numeric_limits<float>::max();
-    const Unit* target = nullptr;
-    for (const auto& u : units) {
-        if (u->unit_type == UNIT_TYPEID::NEUTRAL_MINERALFIELD) {
-            float d = DistanceSquared2D(u->pos, start);
-            if (d < distance) {
-                distance = d;
-                target = u;
-            }
-        }
-    }
-    return target;
-}
-
-Units* PathingBot::SelectMarines() {
-    //Get all friendly units
-    Units units = Observation()->GetUnits(Unit::Alliance::Ally);
-    //vector to hold all selected marines
-    Units* marines{};
-    //Select all marines from our friendly units
-    for (const auto& u : units) {
-        if (u->unit_type == UNIT_TYPEID::TERRAN_MARINE) {
-            marines->push_back(u);
-        }
-    }
-    return marines;
-}
-
-bool PathingBot::TryBuildBarracks() {
-    const ObservationInterface* observation = Observation();
-
-    if (CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) < 1) {
-        return false;
-    }
-
-    if (CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) > OPTIMAL_BARRACKS_COUNT) {
-        return false;
-    }
-
-    return TryBuildStructure(ABILITY_ID::BUILD_BARRACKS);
-}
-
-void PathingBot::PrintMinerals() {
-    std::cout << "Minerals: " << Observation()->GetMinerals() << std::endl;
-}
-
 //Returns the number of a given type of unit/building
 size_t PathingBot::CountUnitType(UNIT_TYPEID unit_type) {
     return Observation()->GetUnits(Unit::Alliance::Self, IsUnit(unit_type)).size();
 }
 
-/* ***** NOT WORKING/NOT USED FUNCTIONS***** */
-//Not working
-void PathingBot::MoveCamera() {
-    // const GameInfo& game_info = Observation()->GetGameInfo();
-
-    // Point2D cameraLocation = Observation()->GetCameraPos();
-    // std::cout << "Camera location: " << cameraLocation.x << " " << cameraLocation.y << std::endl;
-    // Point2D newLocation(cameraLocation.x + 20, cameraLocation.y + 20);
-    // // Point2D target = Observation()->GetStartLocation() + Point2D(3.0f, 3.0f);
-    // Point2DI targetMinimap = ConvertWorldToMinimap(game_info, newLocation);
-    // std::cout << "New Camera location: " << targetMinimap.x << " " << targetMinimap.y << std::endl;
-
-    // ActionsFeatureLayer()->CameraMove(targetMinimap);
-}
-
+/* ***** NOT WORKING/UNUSED FUNCTIONS***** */
 //Not used
 void PathingBot::Render() {
     const SC2APIProtocol::Observation* observation = Observation()->GetRawObservation();
@@ -374,6 +233,5 @@ void PathingBot::Render() {
 
     renderer::Render();
 }
-
 
 }

@@ -22,16 +22,6 @@ public:
     virtual void OnGameEnd() final;
 
 private:
-    // Currently doesn't work
-    void MoveCamera();
-    //Output the current number of minerals the player has
-    void PrintMinerals();
-    void Render();
-    size_t CountUnitType(UNIT_TYPEID unit_type);
-
-    bool TryBuildStructure(ABILITY_ID ability_type_for_structure, UNIT_TYPEID unit_type = UNIT_TYPEID::TERRAN_SCV);
-    bool TryBuildSupplyDepot();
-
     /* ***** Unit Selection Functions ***** */
     /*
         * Selects one random unit from a group of units to be the group leader
@@ -48,12 +38,13 @@ private:
     Point2D GetCentroid(const Units& units);
     //Returns true if a unit is within a certain distance from a point
     bool IsNear(const Unit* unit, Point2D p, float radius);
-    const Unit* FindNearestMineralPatch(const Point2D& start);
 
     /* ***** Game Info Functions ***** */
     //Returns the total health of a group of units
     float GetGroupHealth(const Units& units);
     
+    void Render();
+    size_t CountUnitType(UNIT_TYPEID unit_type);
     
 };
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world);
