@@ -1,6 +1,7 @@
 #include "common.h"
 #include "flocking.h"
 #include <iostream>
+#include <stdlib.h>
 
 #include "sc2renderer/sc2_renderer.h"
 
@@ -47,13 +48,7 @@ Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) 
     return Point2DI(image_x, image_y);
 }
 
-Point2D PathingBot::GetMapCenter() {
-    const GameInfo& game_info = Observation()->GetGameInfo();
-    Point2D center{};
-    center.x = game_info.playable_max.x / 2;
-    center.y = game_info.playable_max.y / 2;
-    return center;
-}
+
 
 void PathingBot::OnGameStart() {
     const ObservationInterface* obs = Observation();
@@ -67,15 +62,14 @@ void PathingBot::OnGameStart() {
     Units marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
     //Move all marines to the center of the map on startup
     for (const auto &marine : marines) {
-        Point2D center = GetMapCenter();
         //Point2D rand = {center.x + GetRandomInteger(1,10), center.y + GetRandomInteger(1,10)};
         //Actions()->UnitCommand(marine, ABILITY_ID::MOVE, game_info.playable_max);
-        Actions()->UnitCommand(marine, ABILITY_ID::MOVE, center);
+        Actions()->UnitCommand(marine, ABILITY_ID::MOVE, GetMapCenter());
         std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
     }
-    //Pick a leader
+    //Pick a leader and flock units on initialization
     leader = SelectLeader(marines);
-    Flock(this, marines, leader, playable_max);
+    //Flock(this, marines, leader, GetMapCenter());
 
     //Get all marines' locations
 }
@@ -84,13 +78,22 @@ void PathingBot::OnStep() {
     const ObservationInterface* obs = Observation();
     const GameInfo& game_info = obs->GetGameInfo();
     uint32_t game_loop = obs->GetGameLoop();
+    uint32_t loop_frequency = 30; //How often we run our algorithm
+    Point2D playable_max = game_info.playable_max; //maximum playable Point on the map
     Point2D center = GetMapCenter();
-    Point2D playable_max = game_info.playable_max;
+    float radius = 2.0; //Radius threshold for IsNear(), 2.0 is a pretty good value
 
     //Select all marines
     Units marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
-    if (game_loop % 10 == 0) {
-        Flock(this, marines, leader, playable_max);
+    if (game_loop % loop_frequency == 0) {
+        for (const auto& marine : marines) {
+            //Move units to the center if they are not "near" the center
+            if (!IsNear(marine, center, radius)) {
+                Actions()->UnitCommand(marine, ABILITY_ID::MOVE, center);
+            }
+        }
+        
+        //Flock(this, marines, leader, GetMapCenter());
         //Print centroid location
         std::cout << "Centroid location: (" << GetCentroid(marines).x << "," << GetCentroid(marines).y
             << ")\n";
@@ -166,6 +169,14 @@ const Unit* PathingBot::SelectLeader(const Units& units) {
     return leader;
 }
 
+Point2D PathingBot::GetMapCenter() {
+    const GameInfo& game_info = Observation()->GetGameInfo();
+    Point2D center{};
+    center.x = game_info.playable_max.x / 2;
+    center.y = game_info.playable_max.y / 2;
+    return center;
+}
+
 Point2D PathingBot::GetCentroid(const Units& units) {
     Point2D centroid{0.0, 0.0};
     if (units.size() == 0) {
@@ -180,6 +191,14 @@ Point2D PathingBot::GetCentroid(const Units& units) {
     centroid.x /= units.size();
     centroid.y /= units.size();
     return centroid;
+}
+
+bool PathingBot::IsNear(const Unit* unit, Point2D p, float radius) {
+    if (!unit) {
+        return false;
+    }
+    return((abs(unit->pos.x - p.x) < radius) && (abs(unit->pos.y - p.y) < radius));
+
 }
 
 /*Attempt to build a given structure

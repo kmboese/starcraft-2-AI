@@ -42,11 +42,14 @@ private:
     bool TryBuildBarracks();
 
     //Location Functions
-    const Unit* FindNearestMineralPatch(const Point2D& start);
-    //Returns the center point of the playable map space
     Point2D GetMapCenter();
     //Returns the center point of a group of units
     Point2D GetCentroid(const Units &units);
+    //Returns true if a unit is within a certain distance from a point
+    bool IsNear(const Unit* unit, Point2D p, float radius);
+    const Unit* FindNearestMineralPatch(const Point2D& start);
+    //Returns the center point of the playable map space
+    
 };
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world);
 }
