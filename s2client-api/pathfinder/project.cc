@@ -20,9 +20,6 @@ int main(int argc, char* argv[]) {
 
     //RenderSettings settings(kMapX, kMapY, kMiniMapX, kMiniMapY);
     //coordinator.SetRender(settings);
-    
-    //Test
-    HelloWorld();
 
 #if defined(__linux__)
 #if LINUX_USE_SOFTWARE_RENDER

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "flocking.h"
 #include <iostream>
 
 #include "sc2renderer/sc2_renderer.h"
@@ -53,25 +54,46 @@ Point2D PathingBot::GetMapCenter() {
 }
 
 void PathingBot::OnGameStart() {
-    const ObservationInterface* observation = Observation();
-    const GameInfo& game_info = Observation()->GetGameInfo();
-    uint32_t gameLoop = observation->GetGameLoop();
+    const ObservationInterface* obs = Observation();
+    const GameInfo& game_info = obs->GetGameInfo();
+    uint32_t gameLoop = obs->GetGameLoop();
+    Point2D center = GetMapCenter();
+    Point2D playable_max = game_info.playable_max;
     //renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
 
     //Select all marines
-    Units marines = observation->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
-    //Move all marines to the center of the map
+    Units marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+    //Move all marines to the center of the map on startup
     for (const auto &marine : marines) {
         Point2D center = GetMapCenter();
+        //Point2D rand = {center.x + GetRandomInteger(1,10), center.y + GetRandomInteger(1,10)};
         //Actions()->UnitCommand(marine, ABILITY_ID::MOVE, game_info.playable_max);
         Actions()->UnitCommand(marine, ABILITY_ID::MOVE, center);
+        std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
     }
+    Flock(this, marines, playable_max);
+
+    //Get all marines' locations
 }
 
 void PathingBot::OnStep() {
     const ObservationInterface* observation = Observation();
     const GameInfo& game_info = Observation()->GetGameInfo();
     uint32_t gameLoop = observation->GetGameLoop();
+
+    //Select all marines
+    Units marines = observation->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+    /*
+    //Move all marines to the center of the map
+    for (const auto &marine : marines) {
+        Point2D center = GetMapCenter();
+        Point2D move_location = { game_info.playable_max.x, marine->pos.y };
+        //Actions()->UnitCommand(marine, ABILITY_ID::MOVE, game_info.playable_max);
+        //Actions()->UnitCommand(marine, ABILITY_ID::MOVE, rand);
+        Actions()->UnitCommand(marine, ABILITY_ID::MOVE, move_location);
+        std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
+    }
+    */
 
     /*
     //Periodically print game info
