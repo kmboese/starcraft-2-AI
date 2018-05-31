@@ -17,6 +17,8 @@ const int kMiniMapY = 200;
 
 const sc2::Unit *leader; //global group leader
 float group_health = 0.0; //group health
+sc2::Units marines; //group of marines in the simulation
+sc2::Units roaches; //group of enemy roaches
 
 //Original
 //using namespace sc2;
@@ -62,18 +64,14 @@ void PathingBot::OnGameStart() {
     
 
     //Select all marines
-    Units marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+    marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+    roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));
 
     //Get the initial group health
-    for (const auto &marine : marines) {
-        group_health += marine->health;
-    }
+    group_health = GetGroupHealth(marines);
 
     //Move all marines to the center of the map on startup
     for (const auto &marine : marines) {
-        //Point2D rand = {center.x + GetRandomInteger(1,10), center.y + GetRandomInteger(1,10)};
-        //Actions()->UnitCommand(marine, ABILITY_ID::MOVE, game_info.playable_max);
-        Actions()->UnitCommand(marine, ABILITY_ID::MOVE, GetMapCenter());
         std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
     }
     //Pick a leader and flock units on initialization
@@ -94,23 +92,23 @@ void PathingBot::OnStep() {
     Point2D center = GetMapCenter();
     float radius = 2.0; //Radius threshold for IsNear(), 2.0 is a pretty good value
 
-    Units marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+    /*Units marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+    Units roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));*/
     //Path units
     if (game_loop % pathing_freq == 0) {
         for (const auto& marine : marines) {
             //Move units to the center if they are not "near" the center, and not the leader
             if (!IsNear(marine, center, radius) && (marine != leader)) {
                 Actions()->UnitCommand(marine, ABILITY_ID::MOVE, center);
+                //Actions()->UnitCommand(marine, ABILITY_ID::ATTACK_ATTACK, playable_max);
             }
         }
-        //Flock(this, marines, leader, GetMapCenter());
+        //Flock(this, marines, leader, playable_max);
     }
     //Update info
     if (game_loop % update_freq == 0) {
-        group_health = 0.0;
-        for (const auto& marine : marines) {
-            group_health += marine->health;
-        }
+        marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+        group_health = GetGroupHealth(marines);
     }
     //Print Info
     if (game_loop % info_freq == 0) {
@@ -146,7 +144,11 @@ void PathingBot::OnStep() {
 }
 
 void PathingBot::OnGameEnd() {
-    renderer::Shutdown();
+    //Update group health
+    group_health = GetGroupHealth(marines);
+    //renderer::Shutdown();
+    std::cout << "**** Game end info: *****\n";
+    std::cout << "Group health: " << group_health << "\n";
 }
 
 void PathingBot::OnUnitIdle(const Unit* unit) {
@@ -221,6 +223,17 @@ bool PathingBot::IsNear(const Unit* unit, Point2D p, float radius) {
     }
     return((abs(unit->pos.x - p.x) < radius) && (abs(unit->pos.y - p.y) < radius));
 
+}
+
+float PathingBot::GetGroupHealth(const Units& units) {
+    if (units.size() == 0) {
+        return 0.0;
+    }
+    float health = 0.0;
+    for (const auto& unit : units) {
+        health += unit->health;
+    }
+    return health;
 }
 
 /*Attempt to build a given structure
