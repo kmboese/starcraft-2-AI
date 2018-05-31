@@ -14,6 +14,8 @@ const int kMapY = 3 * SCALE;
 const int kMiniMapX = 220;
 const int kMiniMapY = 200;
 
+const sc2::Unit *leader;
+
 //Original
 //using namespace sc2;
 namespace sc2 {
@@ -71,18 +73,26 @@ void PathingBot::OnGameStart() {
         Actions()->UnitCommand(marine, ABILITY_ID::MOVE, center);
         std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
     }
-    Flock(this, marines, playable_max);
+    //Pick a leader
+    unsigned int unit_index = GetRandomInteger(0, marines.size() - 1);
+    leader = marines[unit_index];
+    Flock(this, marines, leader, playable_max);
 
     //Get all marines' locations
 }
 
 void PathingBot::OnStep() {
-    const ObservationInterface* observation = Observation();
-    const GameInfo& game_info = Observation()->GetGameInfo();
-    uint32_t gameLoop = observation->GetGameLoop();
+    const ObservationInterface* obs = Observation();
+    const GameInfo& game_info = obs->GetGameInfo();
+    uint32_t game_loop = obs->GetGameLoop();
+    Point2D center = GetMapCenter();
+    Point2D playable_max = game_info.playable_max;
 
     //Select all marines
-    Units marines = observation->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+    Units marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+    if (game_loop % 10 == 0) {
+        Flock(this, marines, leader, playable_max);
+    }
     /*
     //Move all marines to the center of the map
     for (const auto &marine : marines) {

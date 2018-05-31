@@ -5,6 +5,6 @@
 namespace sc2 {
 
 //Flocks a given group of units
-bool Flock(Agent *bot, const Units &units, const Point2D &boundary_point);
+bool Flock(Agent *bot, const Units &units, const Unit *leader, const Point2D &boundary_point);
 
 }
