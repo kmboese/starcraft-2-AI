@@ -43,8 +43,8 @@ void TEST_CREATE_SOURCE(InfluenceMap map) {
     map.createSource(pt1, 3.5);
 
     Point pt2;
-    pt2.x = 1;
-    pt2.y = 4;
+    pt2.x = 0;
+    pt2.y = 9;
     map.createSource(pt2, 0.2);
 
     assert(map.getNumSources() == numSources);

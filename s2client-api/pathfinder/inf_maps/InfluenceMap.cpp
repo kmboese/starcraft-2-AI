@@ -8,7 +8,7 @@
 #include "InfluenceMap.h"
 
 #define INF std::numeric_limits<int>::max()
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 // Maximum influence assuming influence map only deals with positive values
 #define maxInf 9999
@@ -46,7 +46,7 @@ void InfluenceMap::createSource(Point pt, float rad) {
 
     for (int i = minX; i < maxX; ++i) {
         for (int j = maxY; j > minY; --j) {
-            infMap[i][j] = 1;
+            infMap[i][j] = 0;
         }
     }
 
@@ -124,12 +124,18 @@ void InfluenceMap::propagate(float decay) {
             int y = cells[j].y;
 
             // Multiply the current influence value with the exponential decay
-            //  value based in the cell's distance
-            calculatedInf = infMap[x][y] * exponentialDecay(sources[i], 
+            //  value based in the cell's distance. Set previous influence to 1
+            //  on first propagation and to avoid multiplying by 0; may cause
+            //  incorrect values after more than 1 propagation...
+            float prevInf = infMap[x][y];
+            if (prevInf == 0) {
+                prevInf = 1;
+            }
+            calculatedInf = prevInf * exponentialDecay(sources[i], 
                 cells[j], decay);
 
             // Cap the influence
-            infMap[x][y] += MAX(calculatedInf, maxInf);
+            infMap[x][y] += MIN(calculatedInf, maxInf);
         }
     }
 } // end propagate()
