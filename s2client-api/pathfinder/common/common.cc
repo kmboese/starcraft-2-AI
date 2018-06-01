@@ -94,8 +94,12 @@ void PathingBot::OnStep() {
                 Actions()->UnitCommand(marine, ABILITY_ID::MOVE, center);
                 //Actions()->UnitCommand(marine, ABILITY_ID::ATTACK_ATTACK, playable_max);
             }
+            //Separate if units are already at the center
+            else {
+                Separate(this, marines);
+            }
         }
-        Separate(this, marines);
+        
         //Flock(this, marines, leader, playable_max);
     }
     //Update info
