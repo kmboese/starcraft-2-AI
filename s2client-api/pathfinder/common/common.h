@@ -28,7 +28,8 @@
 //16:9 scale
 //#define SCALE 60
 //4:3 scale
-#define SCALE 240
+#define SCALE 240 //Scale for window rendering
+
 const int kMapX = 4 * SCALE;
 const int kMapY = 3 * SCALE;
 const int kMiniMapX = 220;
