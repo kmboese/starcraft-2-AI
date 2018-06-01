@@ -2,6 +2,10 @@
 #include "sc2utils/sc2_manage_process.h"
 #include "sc2renderer/sc2_renderer.h"
 
+
+const float UNIT_RADIUS = 1.0;
+
+
 namespace sc2 {
 
 /*
@@ -13,6 +17,19 @@ namespace sc2 {
     * move_point: The point to which the leader moves initially
  * Returns: true if the algorithm succeeds, false otherwise.
 */
-bool Flock(Agent *bot, const Units &units, const Unit *leader, const Point2D &move_point);
+bool Flock(Agent *bot, const Units& units, const Unit *leader, const Point2D &move_point);
+
+/* 
+ * Separates a group of units from each other
+ * Arguments: 
+    * bot: bot agent to get access to game observations
+    * units: group of units to separate
+ * Returns: true if the separation succeeded, false otherwise
+*/
+bool Separate(Agent *bot, const Units& units);
+
+Point2D GetNeighborsDistance(const Unit* unit, const Units& neighbors);
+
+
 
 }

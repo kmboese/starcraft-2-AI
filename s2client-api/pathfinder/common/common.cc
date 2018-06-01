@@ -59,8 +59,6 @@ void PathingBot::OnGameStart() {
     Point2D playable_max = game_info.playable_max;
     //renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
 
-    
-
     //Select all marines
     marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
     roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));
@@ -75,8 +73,6 @@ void PathingBot::OnGameStart() {
     //Pick a leader and flock units on initialization
     leader = SelectLeader(marines);
     Flock(this, marines, leader, playable_max);
-
-    //Get all marines' locations
 }
 
 void PathingBot::OnStep() {
@@ -90,8 +86,6 @@ void PathingBot::OnStep() {
     Point2D center = GetMapCenter();
     float radius = 2.0; //Radius threshold for IsNear(), 2.0 is a pretty good value
 
-    /*Units marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
-    Units roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));*/
     //Path units
     if (game_loop % pathing_freq == 0) {
         for (const auto& marine : marines) {
@@ -115,30 +109,6 @@ void PathingBot::OnStep() {
             << ")\n";
         std::cout << "Group health: " << group_health << "\n";
     }
-    
-    /*
-    //Move all marines to the center of the map
-    for (const auto &marine : marines) {
-        Point2D center = GetMapCenter();
-        Point2D move_location = { game_info.playable_max.x, marine->pos.y };
-        //Actions()->UnitCommand(marine, ABILITY_ID::MOVE, game_info.playable_max);
-        //Actions()->UnitCommand(marine, ABILITY_ID::MOVE, rand);
-        Actions()->UnitCommand(marine, ABILITY_ID::MOVE, move_location);
-        std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
-    }
-    */
-
-    /*
-    //Periodically print game info
-    if (gameLoop % 100 == 0) {
-        PrintMinerals();
-    }
-    */
-
-    // moveCamera();
-    //TryBuildSupplyDepot();
-    //TryBuildBarracks();
-    //Render();
 }
 
 void PathingBot::OnGameEnd() {
