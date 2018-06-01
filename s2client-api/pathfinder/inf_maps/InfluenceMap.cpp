@@ -53,6 +53,13 @@ void InfluenceMap::createSource(Point pt, float rad) {
     sources.push_back(source);
 } // end createSource()
 
+unsigned int InfluenceMap::getNumRows() {
+    return infMap.size();
+}
+
+unsigned int InfluenceMap::getNumCols() {
+    return infMap[0].size();
+}
 
 unsigned int InfluenceMap::getNumSources() {
     return sources.size();
@@ -127,13 +134,17 @@ void InfluenceMap::propagate(float decay) {
     }
 } // end propagate()
 
-void InfluenceMap::printMap() const {
+void InfluenceMap::printMap() {
     std::vector< std::vector<float> >::const_iterator row;
     std::vector<float>::const_iterator col;
 
+    std::cout << "Rows: " << getNumRows() << std::endl;
+    std::cout << "Columns: " << getNumCols() << "\n" << std::endl;
+    
     for (row = infMap.begin(); row != infMap.end(); ++row) {
         for (col = row->begin(); col != row->end(); ++col) {
-            std::cout << *col << std::endl;
+            std::cout << " | " << *col << " | ";
         }
+        std::cout << std::endl;
     }
 } // end printMap()

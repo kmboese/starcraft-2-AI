@@ -56,6 +56,16 @@ public:
     void createSource(Point pt, float rad);
 
     /**
+     *  @getNumRows: Return the number of rows in influence map.
+     */ 
+    unsigned int getNumRows();
+
+    /**
+     *  @getNumCols: Return the number of columns in influence map.
+     */ 
+    unsigned int getNumCols();
+
+    /**
      *  @getNumSources: Return the number of sources in vector of sources.
      */ 
     unsigned int getNumSources();
@@ -100,7 +110,7 @@ public:
     /** 
      *  @printMap: Prints entire 2D grid with delimiters. Used for debugging.
      */ 
-    void printMap() const;
+    void printMap();
 
 private:
     std::vector<std::vector <float>> infMap;
