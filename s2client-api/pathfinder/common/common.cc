@@ -95,6 +95,7 @@ void PathingBot::OnStep() {
                 //Actions()->UnitCommand(marine, ABILITY_ID::ATTACK_ATTACK, playable_max);
             }
         }
+        Separate(this, marines);
         //Flock(this, marines, leader, playable_max);
     }
     //Update info

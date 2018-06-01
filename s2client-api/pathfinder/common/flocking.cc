@@ -33,9 +33,12 @@ bool Separate(Agent *bot, const Units& units) {
     Point2D move_location {};
     for(const auto& unit : units) {
         diff = GetNeighborsDistance(unit, units);
-        move_location.x = unit->pos.x + diff.x;
-        move_location.y = unit->pos.y + diff.y;
-        bot->Actions()->UnitCommand(unit, ABILITY_ID::MOVE, move_location);
+        if (Distance2D(diff, unit->pos) > UNIT_RADIUS) {
+            move_location.x = unit->pos.x + diff.x;
+            move_location.y = unit->pos.y + diff.y;
+            bot->Actions()->UnitCommand(unit, ABILITY_ID::MOVE, move_location);
+        }
+        
     }
     return true;
 }
