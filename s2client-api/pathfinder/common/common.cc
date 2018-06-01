@@ -94,7 +94,7 @@ void PathingBot::OnStep() {
         bool unit_was_centered = false; //indicates any marine moved to the center
         for (const auto& marine : marines) {
             //Move units to the center if they are not "near" the center, and not the leader
-            if (!IsNear(marine, center, radius) && (marine != leader)) {
+            if (!IsNear(marine, center, radius) && (marine != leader) && !were_centered) {
                 Actions()->UnitCommand(marine, ABILITY_ID::MOVE, center);
                 //Actions()->UnitCommand(marine, ABILITY_ID::ATTACK_ATTACK, playable_max);
                 unit_was_centered = true;
