@@ -8,6 +8,7 @@
 void TEST_INIT_MAP(int rows, int cols);
 void TEST_CREATE_SOURCE(InfluenceMap map);
 void TEST_PROPAGATE(InfluenceMap map);
+void TEST_MAX_PROPAGATE();
 
 int main() {
     std::cout << "Testing initMap\n" << std::endl;
@@ -67,4 +68,9 @@ void TEST_PROPAGATE(InfluenceMap map) {
     float decay = 0.5;
     map.propagate(decay);
     map.printMap();
+}
+
+// Create a massive map and check values
+void TEST_MAX_PROPAGATE() {
+
 }
