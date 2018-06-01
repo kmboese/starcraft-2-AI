@@ -13,6 +13,7 @@ sc2::Units roaches; //group of enemy roaches
 //Conditions
 bool centered = false; //indicates group of marines initially was centered on the map
 bool separated = false; //indicates the group has been separated out
+bool goal_reached = false; //indicates the group of units has reached its goal.
 
 //Original
 //using namespace sc2;
@@ -82,7 +83,7 @@ void PathingBot::OnStep() {
     uint32_t info_freq = 30; //How often we print game info
     uint32_t update_freq = 30; //How often we update game info
     uint32_t sep_freq = pathing_freq / 3; //how often we spread out the marines
-    Point2D playable_max = game_info.playable_max; //maximum playable Point on the map
+    Point2D goal = game_info.playable_max; //maximum playable Point on the map
     Point2D center = GetMapCenter();
     float radius = 2.0; //Radius threshold for IsNear(), 2.0 is a pretty good value
 
@@ -101,9 +102,11 @@ void PathingBot::OnStep() {
             separated = Separate(this, marines);
         }
         //After separation, move units as a group
-        else{
-            Flock(this, marines, leader, playable_max);
-            Separate(this, marines);
+        else if (!goal_reached) {
+            Flock(this, marines, leader, goal);
+            goal_reached = CheckGoalReached(leader, goal);
+        }
+        else {
         }
     }
     //Keep the marines regularly separated out, once centered
@@ -190,7 +193,7 @@ bool MoveUnits(Agent *bot, const Units& units, Point2D point) {
     bool all_near = true; //indicates all units are within a radius of the given point
     for (const auto& unit : units) {
         //Move any units not near the center to the center
-        if (!IsNear(unit, point, CENTER_RADIUS)) {
+        if (!IsNear(unit, point, POINT_RADIUS)) {
             bot->Actions()->UnitCommand(unit, ABILITY_ID::MOVE, point);
             //Actions()->UnitCommand(marine, ABILITY_ID::ATTACK_ATTACK, playable_max);
             all_near = false;
@@ -220,6 +223,13 @@ bool IsNear(const Unit* unit, Point2D p, float radius) {
         return false;
     }
     return((abs(unit->pos.x - p.x) < radius) && (abs(unit->pos.y - p.y) < radius));
+}
+
+bool CheckGoalReached(const Unit* leader, Point2D goal) {
+    if (!leader) {
+        return false;
+    }
+    return(IsNear(leader, goal, POINT_RADIUS));
 }
 
 /* ***** NOT WORKING/UNUSED FUNCTIONS***** */

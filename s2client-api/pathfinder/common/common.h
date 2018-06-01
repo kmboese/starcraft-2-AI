@@ -12,17 +12,17 @@
 //How far away from their position SCV's will build structures
 #define BUILD_RADIUS 15.0f
 //Radius distance at which units are considered "near" to a point
-#define UNIT_RADIUS 1.5
-//Radius within which units are considered centered
-#define CENTER_RADIUS 3.0
+#define UNIT_RADIUS 2.0
+//Radius within which units are considered near
+#define POINT_RADIUS 3.0
 
-//linux options
-#if defined(__linux__)
+//linux rendering variables
+//#if defined(__linux__)
     const float kCameraWidth = 48.0f;
     const int kFeatureLayerSize = 80;
     const int kPixelDrawSize = 3;
     const int kDrawSize = kFeatureLayerSize * kPixelDrawSize * 2;
-#endif
+//#endif
 
 //Scale for window rendering
 //16:9 scale
@@ -72,6 +72,8 @@ bool MoveUnits(Agent *bot, const Units& units, Point2D point);
 Point2D GetCentroid(const Units& units);
 //Returns true if a unit is within a certain distance from a point
 bool IsNear(const Unit* unit, Point2D p, float radius);
+//Returns true if the leader of the group is near the goal point
+bool CheckGoalReached(const Unit* leader, Point2D goal);
 
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world);
 }
