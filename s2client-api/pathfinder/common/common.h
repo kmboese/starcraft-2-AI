@@ -17,6 +17,16 @@
 //Radius within which units are considered centered
 #define CENTER_RADIUS 3.0
 
+//Scale for window rendering
+//16:9 scale
+//#define SCALE 60
+//4:3 scale
+#define SCALE 240
+const int kMapX = 4 * SCALE;
+const int kMapY = 3 * SCALE;
+const int kMiniMapX = 220;
+const int kMiniMapY = 200;
+
 namespace sc2 {
 class PathingBot : public Agent {
 public:
@@ -29,25 +39,31 @@ private:
     /* ***** Unit Selection Functions ***** */
     /*
         * Selects one random unit from a group of units to be the group leader
-        * Returns: a pointer to the leader Unit 
+        * Returns: a pointer to the leader Unit
     */
     const Unit* SelectLeader(const Units& units);
 
     /* ***** Location Functions ***** */
     //Returns the center point of the playable map space
     Point2D GetMapCenter();
-    //Returns the center point of a group of units
-    Point2D GetCentroid(const Units& units);
-    //Returns true if a unit is within a certain distance from a point
-    bool IsNear(const Unit* unit, Point2D p, float radius);
+
 
     /* ***** Game Info Functions ***** */
     //Returns the total health of a group of units
     float GetGroupHealth(const Units& units);
-    
+
     void Render();
     size_t CountUnitType(UNIT_TYPEID unit_type);
-    
+
 };
+
+//Movement functions
+//Moves all given units to the center of the map
+bool MoveUnits(Agent *bot, const Units& units, Point2D point);
+//Returns the center point of a group of units
+Point2D GetCentroid(const Units& units);
+//Returns true if a unit is within a certain distance from a point
+bool IsNear(const Unit* unit, Point2D p, float radius);
+
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world);
 }

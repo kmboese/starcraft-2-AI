@@ -16,19 +16,14 @@ namespace sc2 {
 */
 bool Flock(Agent *bot, const Units& units, const Unit *leader, const Point2D &move_point);
 
-/* 
+/*
  * Separates a group of units from each other
- * Arguments: 
+ * Arguments:
     * bot: bot agent to get access to game observations
     * units: group of units to separate
  * Returns: true if the separation succeeded, false otherwise
 */
 bool Separate(Agent *bot, const Units& units);
-//Moves all given units to the center of the map
-bool CenterUnits(Agent *bot, const Units& units, Point2D center);
-//Returns true if unit is within a certain radius of a point
-bool IsNear(const Unit* unit, Point2D p, float radius);
-
 Point2D GetNeighborsDistance(const Unit* unit, const Units& neighbors);
-Point2D GetCentroid(const Units& units);
+
 }

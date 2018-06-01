@@ -5,16 +5,6 @@
 
 #include "sc2renderer/sc2_renderer.h"
 
-//Scale for window rendering
-//16:9 scale
-//#define SCALE 60
-//4:3 scale
-#define SCALE 240
-const int kMapX = 4 * SCALE;
-const int kMapY = 3 * SCALE;
-const int kMiniMapX = 220;
-const int kMiniMapY = 200;
-
 const sc2::Unit *leader; //global group leader
 float group_health = 0.0; //group health
 sc2::Units marines; //group of marines in the simulation
@@ -42,7 +32,7 @@ Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) 
     float pixel_size = std::max(map_width / image_width, map_height / image_height);
 
     // Origin of world space is bottom left. Origin of image space is top left.
-    // Upper left corner of the map corresponds to the upper left corner of the upper 
+    // Upper left corner of the map corresponds to the upper left corner of the upper
     // left pixel of the feature layer.
     float image_origin_x = 0;
     float image_origin_y = map_height;
@@ -99,7 +89,7 @@ void PathingBot::OnStep() {
         bool unit_was_centered = false; //indicates any marine moved to the center
         //Center the marines
         if (!centered) {
-            centered = CenterUnits(this, marines, center);
+            centered = MoveUnits(this, marines, center);
         }
         //Next, Separate the marines
         else if (!separated) {
@@ -166,7 +156,37 @@ Point2D PathingBot::GetMapCenter() {
     return center;
 }
 
-Point2D PathingBot::GetCentroid(const Units& units) {
+float PathingBot::GetGroupHealth(const Units& units) {
+    if (units.size() == 0) {
+        return 0.0;
+    }
+    float health = 0.0;
+    for (const auto& unit : units) {
+        health += unit->health;
+    }
+    return health;
+}
+
+//Returns the number of a given type of unit/building
+size_t PathingBot::CountUnitType(UNIT_TYPEID unit_type) {
+    return Observation()->GetUnits(Unit::Alliance::Self, IsUnit(unit_type)).size();
+}
+
+/* ***** Common Functions ****/
+bool MoveUnits(Agent *bot, const Units& units, Point2D point) {
+    bool all_near = true; //indicates all units are within a radius of the given point
+    for (const auto& unit : units) {
+        //Move any units not near the center to the center
+        if (!IsNear(unit, point, CENTER_RADIUS)) {
+            bot->Actions()->UnitCommand(unit, ABILITY_ID::MOVE, point);
+            //Actions()->UnitCommand(marine, ABILITY_ID::ATTACK_ATTACK, playable_max);
+            all_near = false;
+        }
+    }
+    return all_near;
+}
+
+Point2D GetCentroid(const Units& units) {
     Point2D centroid{0.0, 0.0};
     if (units.size() == 0) {
         return centroid;
@@ -182,20 +202,11 @@ Point2D PathingBot::GetCentroid(const Units& units) {
     return centroid;
 }
 
-float PathingBot::GetGroupHealth(const Units& units) {
-    if (units.size() == 0) {
-        return 0.0;
+bool IsNear(const Unit* unit, Point2D p, float radius) {
+    if (!unit) {
+        return false;
     }
-    float health = 0.0;
-    for (const auto& unit : units) {
-        health += unit->health;
-    }
-    return health;
-}
-
-//Returns the number of a given type of unit/building
-size_t PathingBot::CountUnitType(UNIT_TYPEID unit_type) {
-    return Observation()->GetUnits(Unit::Alliance::Self, IsUnit(unit_type)).size();
+    return((abs(unit->pos.x - p.x) < radius) && (abs(unit->pos.y - p.y) < radius));
 }
 
 /* ***** NOT WORKING/UNUSED FUNCTIONS***** */

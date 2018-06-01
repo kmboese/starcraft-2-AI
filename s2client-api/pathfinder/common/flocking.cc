@@ -47,31 +47,10 @@ bool Separate(Agent *bot, const Units& units) {
         else {
             //std::cout << "DEBUG: Distance between unit and centroid is " << Distance2D(unit->pos, centroid) << "\n";
         }
-        
+
     }
     return separated;
 }
-
-bool CenterUnits(Agent *bot, const Units& units, Point2D center) {
-    bool centered = true;
-    for (const auto& unit : units) {
-        //Move any units not near the center to the center
-        if (!IsNear(unit, center, CENTER_RADIUS)) {
-            bot->Actions()->UnitCommand(unit, ABILITY_ID::MOVE, center);
-            //Actions()->UnitCommand(marine, ABILITY_ID::ATTACK_ATTACK, playable_max);
-            centered = false;
-        }
-    }
-    return centered;
-}
-
-bool IsNear(const Unit* unit, Point2D p, float radius) {
-    if (!unit) {
-        return false;
-    }
-    return((abs(unit->pos.x - p.x) < radius) && (abs(unit->pos.y - p.y) < radius));
-}
-
 
 Point2D GetNeighborsDistance(const Unit* unit, const Units& neighbors) {
     Point2D diff{0.0, 0.0};
@@ -86,22 +65,6 @@ Point2D GetNeighborsDistance(const Unit* unit, const Units& neighbors) {
         }
     }
     return diff;
-}
-
-Point2D GetCentroid(const Units& units) {
-    Point2D centroid{ 0.0, 0.0 };
-    if (units.size() == 0) {
-        return centroid;
-    }
-    //Sum up all unit x and y positions
-    for (const auto &unit : units) {
-        centroid.x += unit->pos.x;
-        centroid.y += unit->pos.y;
-    }
-    //Divide centroid location by total number of units
-    centroid.x /= units.size();
-    centroid.y /= units.size();
-    return centroid;
 }
 
 }
