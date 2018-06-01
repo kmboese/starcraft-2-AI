@@ -3,9 +3,6 @@
 #include "sc2renderer/sc2_renderer.h"
 
 
-const float UNIT_RADIUS = 1.0;
-
-
 namespace sc2 {
 
 /*
@@ -27,9 +24,11 @@ bool Flock(Agent *bot, const Units& units, const Unit *leader, const Point2D &mo
  * Returns: true if the separation succeeded, false otherwise
 */
 bool Separate(Agent *bot, const Units& units);
+//Moves all given units to the center of the map
+bool CenterUnits(Agent *bot, const Units& units, Point2D center);
+//Returns true if unit is within a certain radius of a point
+bool IsNear(const Unit* unit, Point2D p, float radius);
 
 Point2D GetNeighborsDistance(const Unit* unit, const Units& neighbors);
-
-
-
+Point2D GetCentroid(const Units& units);
 }

@@ -21,7 +21,8 @@ sc2::Units marines; //group of marines in the simulation
 sc2::Units roaches; //group of enemy roaches
 
 //Conditions
-bool were_centered = false; //indicates group of marines initially was centered on the map
+bool centered = false; //indicates group of marines initially was centered on the map
+bool separated = false; //indicates the group has been separated out
 
 //Original
 //using namespace sc2;
@@ -75,40 +76,47 @@ void PathingBot::OnGameStart() {
     }
     //Pick a leader and flock units on initialization
     leader = SelectLeader(marines);
-    Flock(this, marines, leader, playable_max);
+    Flock(this, marines, leader, center);
 }
 
 void PathingBot::OnStep() {
     const ObservationInterface* obs = Observation();
     const GameInfo& game_info = obs->GetGameInfo();
     uint32_t game_loop = obs->GetGameLoop();
-    uint32_t pathing_freq = 30; //How often we run our algorithm
-    uint32_t info_freq = pathing_freq; //How often we print game info
-    uint32_t update_freq = pathing_freq; //How often we update game info
+    uint32_t pathing_freq = 10; //How often we run our algorithm
+    uint32_t info_freq = 30; //How often we print game info
+    uint32_t update_freq = 30; //How often we update game info
+    uint32_t sep_freq = pathing_freq / 3; //how often we spread out the marines
     Point2D playable_max = game_info.playable_max; //maximum playable Point on the map
     Point2D center = GetMapCenter();
     float radius = 2.0; //Radius threshold for IsNear(), 2.0 is a pretty good value
 
+    //Update Info
+    marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+
     //Path units
     if (game_loop % pathing_freq == 0) {
         bool unit_was_centered = false; //indicates any marine moved to the center
-        for (const auto& marine : marines) {
-            //Move units to the center if they are not "near" the center, and not the leader
-            if (!IsNear(marine, center, radius) && (marine != leader) && !were_centered) {
-                Actions()->UnitCommand(marine, ABILITY_ID::MOVE, center);
-                //Actions()->UnitCommand(marine, ABILITY_ID::ATTACK_ATTACK, playable_max);
-                unit_was_centered = true;
-            }
+        //Center the marines
+        if (!centered) {
+            centered = CenterUnits(this, marines, center);
         }
-        if (were_centered || !unit_was_centered) {
-            were_centered = true;
+        //Next, Separate the marines
+        else if (!separated) {
+            separated = Separate(this, marines);
+        }
+        //After separation, move units as a group
+        else{
+            Flock(this, marines, leader, playable_max);
             Separate(this, marines);
         }
-        //Flock(this, marines, leader, playable_max);
+    }
+    //Keep the marines regularly separated out, once centered
+    if (game_loop % sep_freq == 0 && centered) {
+        Separate(this, marines);
     }
     //Update info
     if (game_loop % update_freq == 0) {
-        marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
         group_health = GetGroupHealth(marines);
     }
     //Print Info
@@ -172,14 +180,6 @@ Point2D PathingBot::GetCentroid(const Units& units) {
     centroid.x /= units.size();
     centroid.y /= units.size();
     return centroid;
-}
-
-bool PathingBot::IsNear(const Unit* unit, Point2D p, float radius) {
-    if (!unit) {
-        return false;
-    }
-    return((abs(unit->pos.x - p.x) < radius) && (abs(unit->pos.y - p.y) < radius));
-
 }
 
 float PathingBot::GetGroupHealth(const Units& units) {

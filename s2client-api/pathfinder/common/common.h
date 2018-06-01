@@ -12,6 +12,10 @@
 #define SUPPLY_BUFFER 6
 //How far away from their position SCV's will build structures
 #define BUILD_RADIUS 15.0f
+//Radius distance at which units are considered "near" to a point
+#define UNIT_RADIUS 1.5
+//Radius within which units are considered centered
+#define CENTER_RADIUS 3.0
 
 namespace sc2 {
 class PathingBot : public Agent {
@@ -28,8 +32,6 @@ private:
         * Returns: a pointer to the leader Unit 
     */
     const Unit* SelectLeader(const Units& units);
-    Units* SelectMarines();
-    bool TryBuildBarracks();
 
     /* ***** Location Functions ***** */
     //Returns the center point of the playable map space
