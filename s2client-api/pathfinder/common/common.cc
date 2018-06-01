@@ -54,7 +54,7 @@ void PathingBot::OnGameStart() {
 
     //Render on Linux
 #if defined(__linux__)
-    renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
+    //renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
     renderer::Initialize("Feature layers", 50, 50, 2 * kDrawSize, 2 * kDrawSize);
 #endif
 

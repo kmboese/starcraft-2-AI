@@ -18,17 +18,17 @@
 
 //linux options
 #if defined(__linux__)
-    const float kCameraWidth = 24.0f;
+    const float kCameraWidth = 48.0f;
     const int kFeatureLayerSize = 80;
-    const int kPixelDrawSize = 5;
-    const int kDrawSize = kFeatureLayerSize * kPixelDrawSize;
+    const int kPixelDrawSize = 3;
+    const int kDrawSize = kFeatureLayerSize * kPixelDrawSize * 2;
 #endif
 
 //Scale for window rendering
 //16:9 scale
 //#define SCALE 60
 //4:3 scale
-#define SCALE 240 //Scale for window rendering
+#define SCALE 300 //Scale for window rendering
 
 const int kMapX = 4 * SCALE;
 const int kMapY = 3 * SCALE;

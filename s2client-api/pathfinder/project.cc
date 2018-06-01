@@ -27,10 +27,8 @@ int main(int argc, char* argv[]) {
     coordinator.SetRender(settings);
 
     //Feature layers
-    /*
-    sc2::FeatureLayerSettings settings(kCameraWidth, kFeatureLayerSize, kFeatureLayerSize, kFeatureLayerSize, kFeatureLayerSize);
-    coordinator.SetFeatureLayers(settings);
-    */
+    sc2::FeatureLayerSettings feature_settings(kCameraWidth, kFeatureLayerSize, kFeatureLayerSize, kFeatureLayerSize, kFeatureLayerSize);
+    coordinator.SetFeatureLayers(feature_settings);
 #endif
 
 #if defined(__linux__)
