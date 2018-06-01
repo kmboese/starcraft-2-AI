@@ -20,6 +20,9 @@ float group_health = 0.0; //group health
 sc2::Units marines; //group of marines in the simulation
 sc2::Units roaches; //group of enemy roaches
 
+//Conditions
+bool were_centered = false; //indicates group of marines initially was centered on the map
+
 //Original
 //using namespace sc2;
 namespace sc2 {
@@ -88,18 +91,19 @@ void PathingBot::OnStep() {
 
     //Path units
     if (game_loop % pathing_freq == 0) {
+        bool unit_was_centered = false; //indicates any marine moved to the center
         for (const auto& marine : marines) {
             //Move units to the center if they are not "near" the center, and not the leader
             if (!IsNear(marine, center, radius) && (marine != leader)) {
                 Actions()->UnitCommand(marine, ABILITY_ID::MOVE, center);
                 //Actions()->UnitCommand(marine, ABILITY_ID::ATTACK_ATTACK, playable_max);
-            }
-            //Separate if units are already at the center
-            else {
-                Separate(this, marines);
+                unit_was_centered = true;
             }
         }
-        
+        if (were_centered || !unit_was_centered) {
+            were_centered = true;
+            Separate(this, marines);
+        }
         //Flock(this, marines, leader, playable_max);
     }
     //Update info
