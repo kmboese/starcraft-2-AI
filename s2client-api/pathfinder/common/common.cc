@@ -51,7 +51,11 @@ void PathingBot::OnGameStart() {
     uint32_t gameLoop = obs->GetGameLoop();
     Point2D center = GetMapCenter();
     Point2D playable_max = game_info.playable_max;
-    //renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
+
+    //Render on Linux
+#if defined(__linux__)
+    renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
+#endif
 
     //Select all marines
     marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
@@ -116,14 +120,30 @@ void PathingBot::OnStep() {
             << ")\n";
         std::cout << "Group health: " << group_health << "\n";
     }
+    //Linux options
+#if defined(__linux__)
+    const SC2APIProtocol::Observation* raw_obs = Observation()->GetRawObservation();
+    const SC2APIProtocol::ObservationRender& render =  raw_obs->render_data();
+
+    const SC2APIProtocol::ImageData& minimap = render.minimap();
+    sc2::renderer::ImageRGB(&minimap.data().data()[0], minimap.size().x(), minimap.size().y(), 0, std::max(kMiniMapY, kMapY) - kMiniMapY);
+
+    const SC2APIProtocol::ImageData& map = render.map();
+    sc2::renderer::ImageRGB(&map.data().data()[0], map.size().x(), map.size().y(), kMiniMapX, 0);
+
+    sc2::renderer::Render();
+#endif
 }
 
 void PathingBot::OnGameEnd() {
     //Update group health
     group_health = GetGroupHealth(marines);
-    //renderer::Shutdown();
     std::cout << "**** Game end info: *****\n";
     std::cout << "Group health: " << group_health << "\n";
+
+#if defined(__linux__)
+    renderer::Shutdown();
+#endif
 }
 
 void PathingBot::OnUnitIdle(const Unit* unit) {

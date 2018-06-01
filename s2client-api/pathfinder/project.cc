@@ -33,7 +33,6 @@ int main(int argc, char* argv[]) {
 #endif
 
     sc2::PathingBot bot;
-
     coordinator.SetParticipants({
         sc2::CreateParticipant(sc2::Race::Terran, &bot),
         sc2::CreateComputer(sc2::Race::Zerg)
