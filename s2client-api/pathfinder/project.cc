@@ -18,8 +18,11 @@ int main(int argc, char* argv[]) {
     //Set game to run realtime (capped framerate) or uncapped
     coordinator.SetRealtime(true);
 
-    //RenderSettings settings(kMapX, kMapY, kMiniMapX, kMiniMapY);
-    //coordinator.SetRender(settings);
+//if on linux, set up renderer
+#if defined(__linux__)
+    sc2::RenderSettings settings(kMapX, kMapY, kMiniMapX, kMiniMapY);
+    coordinator.SetRender(settings);
+#endif
 
 #if defined(__linux__)
 #if LINUX_USE_SOFTWARE_RENDER
