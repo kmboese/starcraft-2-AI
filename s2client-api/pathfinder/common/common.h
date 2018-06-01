@@ -16,6 +16,14 @@
 //Radius within which units are considered centered
 #define CENTER_RADIUS 3.0
 
+//linux options
+#if defined(__linux__)
+    const float kCameraWidth = 24.0f;
+    const int kFeatureLayerSize = 80;
+    const int kPixelDrawSize = 5;
+    const int kDrawSize = kFeatureLayerSize * kPixelDrawSize;
+#endif
+
 //Scale for window rendering
 //16:9 scale
 //#define SCALE 60

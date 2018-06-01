@@ -55,6 +55,7 @@ void PathingBot::OnGameStart() {
     //Render on Linux
 #if defined(__linux__)
     renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
+    renderer::Initialize("Feature layers", 50, 50, 2 * kDrawSize, 2 * kDrawSize);
 #endif
 
     //Select all marines
@@ -122,16 +123,8 @@ void PathingBot::OnStep() {
     }
     //Linux options
 #if defined(__linux__)
-    const SC2APIProtocol::Observation* raw_obs = Observation()->GetRawObservation();
-    const SC2APIProtocol::ObservationRender& render =  raw_obs->render_data();
-
-    const SC2APIProtocol::ImageData& minimap = render.minimap();
-    sc2::renderer::ImageRGB(&minimap.data().data()[0], minimap.size().x(), minimap.size().y(), 0, std::max(kMiniMapY, kMapY) - kMiniMapY);
-
-    const SC2APIProtocol::ImageData& map = render.map();
-    sc2::renderer::ImageRGB(&map.data().data()[0], map.size().x(), map.size().y(), kMiniMapX, 0);
-
-    sc2::renderer::Render();
+    //Render all layers
+    Render();
 #endif
 }
 
@@ -230,16 +223,50 @@ bool IsNear(const Unit* unit, Point2D p, float radius) {
 }
 
 /* ***** NOT WORKING/UNUSED FUNCTIONS***** */
-//Not used
+//Linux rendering
+
+//Helper rendering functions
+void DrawFeatureLayer1BPP(const SC2APIProtocol::ImageData& image_data, int off_x, int off_y) {
+    //assert(image_data.bits_per_pixel() == 1);
+    int width = image_data.size().x();
+    int height = image_data.size().y();
+    sc2::renderer::Matrix1BPP(image_data.data().c_str(), width, height, off_x, off_y, kPixelDrawSize, kPixelDrawSize);
+}
+
+void DrawFeatureLayerUnits8BPP(const SC2APIProtocol::ImageData& image_data, int off_x, int off_y) {
+    //assert(image_data.bits_per_pixel() == 8);
+    int width = image_data.size().x();
+    int height = image_data.size().y();
+    sc2::renderer::Matrix8BPPPlayers(image_data.data().c_str(), width, height, off_x, off_y, kPixelDrawSize, kPixelDrawSize);
+}
+
+void DrawFeatureLayerHeightMap8BPP(const SC2APIProtocol::ImageData& image_data, int off_x, int off_y) {
+    //assert(image_data.bits_per_pixel() == 8);
+    int width = image_data.size().x();
+    int height = image_data.size().y();
+    sc2::renderer::Matrix8BPPHeightMap(image_data.data().c_str(), width, height, off_x, off_y, kPixelDrawSize, kPixelDrawSize);
+}
+
+//Main rendering function
 void PathingBot::Render() {
     const SC2APIProtocol::Observation* observation = Observation()->GetRawObservation();
     const SC2APIProtocol::ObservationRender& render = observation->render_data();
 
+    //Render layer
     const SC2APIProtocol::ImageData& minimap = render.minimap();
     renderer::ImageRGB(&minimap.data().data()[0], minimap.size().x(), minimap.size().y(), 0, std::max(kMiniMapY, kMapY) - kMiniMapY);
 
     const SC2APIProtocol::ImageData& map = render.map();
     renderer::ImageRGB(&map.data().data()[0], map.size().x(), map.size().y(), kMiniMapX, 0);
+
+    ///Feature layer
+    const SC2APIProtocol::FeatureLayers& m = observation->feature_layer_data().renders();
+    DrawFeatureLayerUnits8BPP(m.unit_density(), 0, 0);
+    DrawFeatureLayer1BPP(m.selected(), kDrawSize, 0);
+
+    const SC2APIProtocol::FeatureLayersMinimap& mi = observation->feature_layer_data().minimap_renders();
+    DrawFeatureLayerHeightMap8BPP(mi.height_map(), 0, kDrawSize);
+    DrawFeatureLayer1BPP(mi.camera(), kDrawSize, kDrawSize);
 
     renderer::Render();
 }

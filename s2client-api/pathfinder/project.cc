@@ -6,6 +6,7 @@
 #include "flocking.h"
 
 #include <iostream>
+
 // #include <conio.h>
 /* NOTE: for some reason, using local scoping for the sc2 namespace in project.cc causes cmake to fail, so I'm skipping it for now.*/
 
@@ -20,8 +21,16 @@ int main(int argc, char* argv[]) {
 
 //if on linux, set up renderer
 #if defined(__linux__)
+    //Game Rendering
     sc2::RenderSettings settings(kMapX, kMapY, kMiniMapX, kMiniMapY);
+    //sc2::FeatureLayerSettings settings(kCameraWidth, kFeatureLayerSize, kFeatureLayerSize, kFeatureLayerSize, kFeatureLayerSize);
     coordinator.SetRender(settings);
+
+    //Feature layers
+    /*
+    sc2::FeatureLayerSettings settings(kCameraWidth, kFeatureLayerSize, kFeatureLayerSize, kFeatureLayerSize, kFeatureLayerSize);
+    coordinator.SetFeatureLayers(settings);
+    */
 #endif
 
 #if defined(__linux__)
