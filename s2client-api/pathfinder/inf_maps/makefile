@@ -4,8 +4,8 @@ CCFLAGS := -std=c++11 -g -Wall -Werror
 
 INCDIR := -I/usr/include
 
-TARGET = InfluenceMap
-OBJS = InfluenceMap.o
+TARGET = infMapTester
+OBJS = InfluenceMap.o infMapTester.o
 
 
 all: $(TARGET)

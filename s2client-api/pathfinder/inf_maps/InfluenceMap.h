@@ -3,21 +3,26 @@
 
 #include <vector>
 
-/* 
+typedef struct Point
+{
+    int x;
+    int y;
+
+} Point;
+
+/** 
  * @InfluenceSource:
  * 
- * @x: Center of source along the x axis.
- * @y: Center of source along the y axis.
+ * @pt: Position of source
  * @radius: Radius of source's influence.
  */ 
 typedef struct InfluenceSource {
-    int x;
-    int y;
+    Point pt;
     float radius;
 
-    InfluenceSource(int x, int y, float rad) {
-        this->x = x;
-        this->y = y;
+    InfluenceSource(Point pt, float rad) {
+        this->pt.x = pt.x;
+        this->pt.y = pt.y;
         radius = rad;
     }
 
@@ -25,7 +30,7 @@ typedef struct InfluenceSource {
 
 class InfluenceMap {
 public:
-    /* 
+    /** 
      *  @InfluenceMap: Creates a 2D grid for the influence map. This is based on
      *      our bot's visual map. There will be multiple maps in the system;
      *      for example there will be one map for our bot's units, and another
@@ -36,56 +41,69 @@ public:
      */ 
     InfluenceMap(int rows, int cols);
 
-    /* 
-     *  @initMap: Initialize each of the map's cells with value of infinity.
+    /** 
+     *  @initMap: Initialize each of the map's cells with value 1.
      */ 
     void initMap();
 
-    /*
+    /**
      *  @createSource: Creates an influence source (an agent in the system). 
      *      Each source has a center point where the influence source is 
-     *      stationed).
+     *      stationed). 
      * 
      *  Stores sources in private vector of sources.
      */ 
-    void createSource(int x, int y, float rad);
+    void createSource(Point pt, float rad);
 
-    /*
+    /**
+     *  @getNumSources: Return the number of sources in vector of sources.
+     */ 
+    unsigned int getNumSources();
+
+    /**
      *  @calcOverlap: A source's influence can overlap with another source's 
      *      influence. When this happens, add these values.
      */ 
     void calcOverlap();
 
-    /*
+    /**
+     *  @exponentialDecay: Exponential decay function that returns influence
+     *      based on a cell's distance from the source.
+     * 
+     *  @source: The source to base the decay off of.
+     *  @cell: The cell to update in the influence map.
+     *  @decay: How much influence values decay with distance.
+     */ 
+    float exponentialDecay(const InfluenceSource &source, const Point cell, 
+        float decay);
+
+    /**
+     *  @calcCells: Returns a vector of cells from the influence map that the
+     *      source has range over based on its radius.
+     */ 
+    std::vector<Point> calcCells(const InfluenceSource &source);
+
+    /**
      *  @propagate: Updates the influence values of every source on the 
      *      influence map.
      * 
-     *  @momentum: Whether or not the updated influence
-     *      value will be biased towards existing value or the new calculated
-     *      value.
      *  @decay: How much influence values decay with distance.
-     *  @frequency: How often to update the influence values.
      */ 
-    void propagate(float momentum, float decay, float frequency);
+    void propagate(float decay);
 
-    /*
-     *
-     */ 
-    float linearInterpolation(float momentum);
-
-    /*
-     *
+    /**
+     *  @updateMap: Updates the map. (Update the map based on some defined
+     *      frequency.)
      */ 
     void updateMap();
 
-    /* 
+    /** 
      *  @printMap: Prints entire 2D grid with delimiters. Used for debugging.
      */ 
     void printMap() const;
 
-    int getNumSources();
 private:
-    std::vector<std::vector <float>> map;
+    std::vector<std::vector <float>> infMap;
     std::vector<InfluenceSource> sources;
 };
 
