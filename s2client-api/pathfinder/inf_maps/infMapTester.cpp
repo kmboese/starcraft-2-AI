@@ -7,7 +7,7 @@
 void TEST_INIT_MAP(int rows, int cols);
 
 int main() {
-    TEST_INIT_MAP(3, 3);
+    TEST_INIT_MAP(4, 3);
     
     return 0;
 }

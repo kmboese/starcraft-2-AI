@@ -28,7 +28,7 @@ InfluenceMap::InfluenceMap(int rows, int cols) {
 void InfluenceMap::initMap() {
     for (unsigned int row = 0; row < infMap.size(); ++row) {
         for (unsigned int col = 0; col < infMap[row].size(); ++col) {
-            infMap[row][col] = 1;
+            infMap[row][col] = INF;
         }
     }
 } // end initMap()
@@ -46,7 +46,7 @@ void InfluenceMap::createSource(Point pt, float rad) {
 
     for (int i = minX; i < maxX; ++i) {
         for (int j = maxY; j > minY; --j) {
-            infMap[i][j] = 0;
+            infMap[i][j] = 1;
         }
     }
 
