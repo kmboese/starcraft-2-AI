@@ -9,6 +9,7 @@ const sc2::Unit *leader; //global group leader
 float group_health = 0.0; //group health
 sc2::Units marines; //group of marines in the simulation
 sc2::Units roaches; //group of enemy roaches
+sc2::Point2D goal; //Goal point for A*
 
 //Conditions
 bool centered = false; //indicates group of marines initially was centered on the map
@@ -82,10 +83,9 @@ void PathingBot::OnStep() {
     uint32_t pathing_freq = 10; //How often we run our algorithm
     uint32_t info_freq = 30; //How often we print game info
     uint32_t update_freq = 30; //How often we update game info
-    uint32_t sep_freq = pathing_freq / 3; //how often we spread out the marines
-    Point2D goal = game_info.playable_max; //maximum playable Point on the map
+    uint32_t sep_freq = pathing_freq / 1; //how often we spread out the marines
+    goal = game_info.playable_max; //maximum playable Point on the map
     Point2D center = GetMapCenter();
-    float radius = 2.0; //Radius threshold for IsNear(), 2.0 is a pretty good value
 
     //Update Info
     marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
@@ -110,8 +110,11 @@ void PathingBot::OnStep() {
         }
     }
     //Keep the marines regularly separated out, once centered
-    if (game_loop % sep_freq == 0 && centered) {
-        Separate(this, marines);
+    if ((game_loop % sep_freq == 0) && separated && (!goal_reached) ) {
+        std::cout << "\t\tSeparation loop entered!" << std::endl;
+        //Flock(this, marines, leader, goal);
+        //Separate(this, marines);
+        //MoveFromCentroid(this, marines);
     }
     //Update info
     if (game_loop % update_freq == 0) {
@@ -131,15 +134,19 @@ void PathingBot::OnStep() {
 #endif
 }
 
-void PathingBot::OnGameEnd() {
-    //Update group health
-    group_health = GetGroupHealth(marines);
-    std::cout << "**** Game end info: *****\n";
-    std::cout << "Group health: " << group_health << "\n";
-
-#if defined(__linux__)
-    renderer::Shutdown();
-#endif
+void PathingBot::OnUnitDestroyed(const Unit* unit) {
+    //Update list of marines (may be unnecessary)
+    marines = Observation()->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+    //Choose and path a new leader if the leader is killed
+    if (unit == leader) {
+        std::cout << "\tEvent: new leader chosen!" << std::endl;
+        leader = SelectLeader(marines);
+        Flock(this, marines, leader, goal);
+        Separate(this, marines);
+    }
+    else {
+        std::cout << "\tEvent: non-leader marine died" << std::endl;
+    }
 }
 
 void PathingBot::OnUnitIdle(const Unit* unit) {
@@ -153,6 +160,17 @@ void PathingBot::OnUnitIdle(const Unit* unit) {
             break;
         }
     }
+}
+
+void PathingBot::OnGameEnd() {
+    //Update group health
+    group_health = GetGroupHealth(marines);
+    std::cout << "**** Game end info: *****\n";
+    std::cout << "Group health: " << group_health << "\n";
+
+#if defined(__linux__)
+    renderer::Shutdown();
+#endif
 }
 
 const Unit* PathingBot::SelectLeader(const Units& units) {
@@ -229,7 +247,8 @@ bool CheckGoalReached(const Unit* leader, Point2D goal) {
     if (!leader) {
         return false;
     }
-    return(IsNear(leader, goal, POINT_RADIUS));
+    //std::cout << "\tDEBUG: leader is " << Distance2D(leader->pos, goal) << " from the goal\n";
+    return(IsNear(leader, goal, GOAL_RADIUS));
 }
 
 /* ***** NOT WORKING/UNUSED FUNCTIONS***** */

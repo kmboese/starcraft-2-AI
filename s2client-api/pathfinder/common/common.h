@@ -11,10 +11,14 @@
 #define SUPPLY_BUFFER 6
 //How far away from their position SCV's will build structures
 #define BUILD_RADIUS 15.0f
-//Radius distance at which units are considered "near" to a point
-#define UNIT_RADIUS 2.0
-//Radius within which units are considered near
+//Radius within which units are considered near each other
+#define UNIT_RADIUS 1.5
+//Radius within which units are considered near a point
 #define POINT_RADIUS 3.0
+//Radius marines must be away from their centroid
+#define CENTROID_RADIUS 2.0
+//Radius within which the leader is considered to have reached the goal
+#define GOAL_RADIUS 15.0
 
 //linux rendering variables
 //#if defined(__linux__)
@@ -41,6 +45,7 @@ public:
     virtual void OnGameStart() final;
     virtual void OnStep() final;
     virtual void OnUnitIdle(const Unit* unit) final;
+    virtual void OnUnitDestroyed(const Unit* unit);
     virtual void OnGameEnd() final;
 
 private:

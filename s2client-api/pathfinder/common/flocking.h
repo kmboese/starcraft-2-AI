@@ -14,7 +14,7 @@ namespace sc2 {
     * move_point: The point to which the leader moves initially
  * Returns: true if the algorithm succeeds, false otherwise.
 */
-bool Flock(Agent *bot, const Units& units, const Unit *leader, const Point2D &move_point);
+bool Flock(Agent *bot, const Units& units, const Unit *leader, Point2D &move_point);
 
 /*
  * Separates a group of units from each other
@@ -24,6 +24,11 @@ bool Flock(Agent *bot, const Units& units, const Unit *leader, const Point2D &mo
  * Returns: true if the separation succeeded, false otherwise
 */
 bool Separate(Agent *bot, const Units& units);
+//Moves a group of units away from their center point
+bool MoveFromCentroid(Agent* bot, const Units& units);
+//Moves a group of units away from each other
+bool MoveFromNeighbors(Agent* bot, const Units& units);
+//Return the total distance from all neighbor marines
 Point2D GetNeighborsDistance(const Unit* unit, const Units& neighbors);
 
 }
