@@ -18,9 +18,11 @@ bool Flock(Agent *bot, const Units& units, const Unit* leader, Point2D &move_poi
     //Make all other units space themselves out and follow the leader
     for (auto &unit : units) {
         if (unit != leader) {
+            //Scale the movement vector to get better separation
+            float mult = 100.0f;
             Point2D adjustment = GetNeighborsDistance(unit, units);
-            move_point.x += adjustment.x;
-            move_point.y += adjustment.y;
+            move_point.x += mult*adjustment.x;
+            move_point.y += mult*adjustment.y;
             bot->Actions()->UnitCommand(unit, ABILITY_ID::MOVE, move_point);
         }
     }
@@ -71,7 +73,7 @@ bool MoveFromCentroid(Agent* bot, const Units& units) {
 
 bool MoveFromNeighbors(Agent* bot, const Units& units) {
     bool separated = true; //keeps track of whether units are grouped properly
-    float mult = float(GetRandomInteger(4,7)); //Multiplier for movement of units away from each other
+    float mult = float(GetRandomInteger(10,15)); //Multiplier for movement of units away from each other
     if (units.size() == 0) {
         return false;
     }
