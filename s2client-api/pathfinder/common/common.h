@@ -4,21 +4,14 @@
 #include "sc2renderer/sc2_renderer.h"
 
 #define LINUX_USE_SOFTWARE_RENDER 0
-// How many workers to have built at all times
-#define OPTIMAL_SCV_COUNT 14
-#define OPTIMAL_BARRACKS_COUNT 6
-// How close we can get to our supply cap before building more supply depots
-#define SUPPLY_BUFFER 6
-//How far away from their position SCV's will build structures
-#define BUILD_RADIUS 15.0f
 //Radius within which units are considered near each other
-#define UNIT_RADIUS 1.5
+#define UNIT_RADIUS 1.0f
 //Radius within which units are considered near a point
-#define POINT_RADIUS 3.0
+#define POINT_RADIUS 3.0f
 //Radius marines must be away from their centroid
-#define CENTROID_RADIUS 2.0
+#define CENTROID_RADIUS 2.0f
 //Radius within which the leader is considered to have reached the goal
-#define GOAL_RADIUS 15.0
+#define GOAL_RADIUS 15.0f
 
 //linux rendering variables
 //#if defined(__linux__)
