@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <stdlib.h>
 
 #include "sc2api/sc2_api.h"
 #include "sc2lib/sc2_lib.h"
@@ -76,8 +77,12 @@ bool MoveFromNeighbors(Agent* bot, const Units& units) {
         return false;
     }
     //Minimum and maximum values for movement multiplier note: (15,20) are decent values
+    /*
     int lower_bound = 10;
     int upper_bound = 20;
+    */
+    int lower_bound = int(units.size() - sqrt(units.size()));
+    int upper_bound = int(units.size());
     bool separated = true; //keeps track of whether units are grouped properly
     float mult = float((units[0]->radius)*GetRandomInteger(lower_bound, upper_bound)); //Multiplier for movement of units away from each other
     
@@ -85,7 +90,7 @@ bool MoveFromNeighbors(Agent* bot, const Units& units) {
         Point2D dist{};
         dist = GetNeighborsDistance(unit, units);
         //If unit is withing range of its neighbors, move it away from them
-        if (Distance2D(dist, Point2D{ 0.0, 0.0 }) > 0.0001) {
+        if (Distance2D(dist, Point2D{ 0.0, 0.0 }) > 0.001f) {
             Point2D move_location{};
             move_location.x = unit->pos.x + mult*dist.x;
             move_location.y = unit->pos.y + mult*dist.y;
