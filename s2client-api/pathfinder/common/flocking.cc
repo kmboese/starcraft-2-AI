@@ -19,7 +19,7 @@ bool Flock(Agent *bot, const Units& units, const Unit* leader, Point2D &move_poi
     for (auto &unit : units) {
         if (unit != leader) {
             //Scale the movement vector to get better separation
-            float mult = 100.0f;
+            float mult = Distance2D(unit->pos, move_point);
             Point2D adjustment = GetNeighborsDistance(unit, units);
             move_point.x += mult*adjustment.x;
             move_point.y += mult*adjustment.y;
@@ -72,11 +72,13 @@ bool MoveFromCentroid(Agent* bot, const Units& units) {
 }
 
 bool MoveFromNeighbors(Agent* bot, const Units& units) {
-    bool separated = true; //keeps track of whether units are grouped properly
-    float mult = float(GetRandomInteger(10,15)); //Multiplier for movement of units away from each other
     if (units.size() == 0) {
         return false;
     }
+
+    bool separated = true; //keeps track of whether units are grouped properly
+    float mult = float((units[0]->radius)*GetRandomInteger(10,15)); //Multiplier for movement of units away from each other
+    
     for (const auto& unit : units) {
         Point2D dist{};
         dist = GetNeighborsDistance(unit, units);
