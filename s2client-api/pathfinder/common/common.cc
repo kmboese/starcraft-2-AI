@@ -69,7 +69,7 @@ void PathingBot::OnGameStart() {
 
     //Move all marines to the center of the map on startup
     for (const auto &marine : marines) {
-        std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
+        //std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
     }
     //Pick a leader and flock units on initialization
     leader = SelectLeader(marines);
@@ -125,8 +125,10 @@ void PathingBot::OnStep() {
     //Print Info
     if (game_loop % info_freq == 0) {
         //Print game info
+        /*
         std::cout << "Centroid location: (" << GetCentroid(marines).x << "," << GetCentroid(marines).y
             << ")\n";
+        */
         std::cout << "Group health: " << group_health << "\n";
     }
     //Linux options
@@ -141,13 +143,13 @@ void PathingBot::OnUnitDestroyed(const Unit* unit) {
     marines = Observation()->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
     //Choose and path a new leader if the leader is killed
     if (unit == leader) {
-        std::cout << "\tEvent: new leader chosen!" << std::endl;
+        std::cout << "\t***** Event: new leader chosen! *****" << std::endl;
         leader = SelectLeader(marines);
         Flock(this, marines, leader, goal);
         Separate(this, marines);
     }
     else {
-        std::cout << "\tEvent: non-leader marine died" << std::endl;
+        //std::cout << "\tEvent: non-leader marine died" << std::endl;
     }
 }
 
