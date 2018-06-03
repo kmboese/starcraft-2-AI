@@ -106,12 +106,14 @@ void PathingBot::OnStep() {
             Flock(this, marines, leader, goal);
             goal_reached = CheckGoalReached(leader, goal);
         }
+        //End the game after the goal is reached
         else {
+            Separate(this, marines);
         }
     }
     //Keep the marines regularly separated out, once centered
     if ((game_loop % sep_freq == 0) && separated && (!goal_reached) ) {
-        std::cout << "\t\tSeparation loop entered!" << std::endl;
+        //std::cout << "\t\tSeparation loop entered!" << std::endl;
         //Flock(this, marines, leader, goal);
         //Separate(this, marines);
         //MoveFromCentroid(this, marines);

@@ -17,7 +17,7 @@ namespace sc2 {
 bool Flock(Agent *bot, const Units& units, const Unit *leader, Point2D &move_point);
 
 /*
- * Separates a group of units from each other
+ * Separates a group of units from each other, using minimum relative proximity as a goal
  * Arguments:
     * bot: bot agent to get access to game observations
     * units: group of units to separate

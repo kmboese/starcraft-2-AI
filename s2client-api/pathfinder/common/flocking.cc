@@ -19,7 +19,7 @@ bool Flock(Agent *bot, const Units& units, const Unit* leader, Point2D &move_poi
     for (auto &unit : units) {
         if (unit != leader) {
             //Scale the movement vector to get better separation
-            float mult = Distance2D(unit->pos, move_point);
+            float mult = 2.0f*Distance2D(unit->pos, move_point);
             Point2D adjustment = GetNeighborsDistance(unit, units);
             move_point.x += mult*adjustment.x;
             move_point.y += mult*adjustment.y;
@@ -75,9 +75,11 @@ bool MoveFromNeighbors(Agent* bot, const Units& units) {
     if (units.size() == 0) {
         return false;
     }
-
+    //Minimum and maximum values for movement multiplier note: (15,20) are decent values
+    int lower_bound = 10;
+    int upper_bound = 20;
     bool separated = true; //keeps track of whether units are grouped properly
-    float mult = float((units[0]->radius)*GetRandomInteger(10,15)); //Multiplier for movement of units away from each other
+    float mult = float((units[0]->radius)*GetRandomInteger(lower_bound, upper_bound)); //Multiplier for movement of units away from each other
     
     for (const auto& unit : units) {
         Point2D dist{};
