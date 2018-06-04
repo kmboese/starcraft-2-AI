@@ -21,6 +21,20 @@ public:
     virtual void OnUnitIdle(const Unit* unit) final;
     virtual void OnGameEnd() final;
 
+    //DPS BEG
+    //======================================
+    //virtual void OnGameFullStart();
+    //virtual void OnUnitDestroyed(const Unit*);
+    //virtual void OnUnitCreated(const Unit*);
+    //virtual void OnUpgradeCompleted(UpgradeID);
+    //virtual void OnBuildingConstructionComplete(const Unit*);
+    //virtual void OnNydusDetected();
+    //virtual void OnNuclearLaunchDetected();
+    //virtual void OnUnitEnterVision(const Unit*);
+    //virtual void OnError(const std::vector<ClientError>& /*client_errors*/, const std::vector<std::string>& /*protocol_errors*/ = {});
+    //======================================
+    //DPS END
+
 private:
     /* ***** Unit Selection Functions ***** */
     /*

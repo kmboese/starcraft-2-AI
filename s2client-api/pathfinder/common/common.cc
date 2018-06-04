@@ -1,5 +1,6 @@
 #include "common.h"
 #include "flocking.h"
+#include "astar.h"
 #include <iostream>
 #include <stdlib.h>
 
@@ -61,22 +62,48 @@ void PathingBot::OnGameStart() {
 
     
 
-    //Select all marines
-    marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
-    roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));
+//    //Select all marines
+//    marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+//    roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));
+//
+//    //Get the initial group health
+//    group_health = GetGroupHealth(marines);
+//
+//    //Move all marines to the center of the map on startup
+//    for (const auto &marine : marines) {
+//        std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
+//    }
+//    //Pick a leader and flock units on initialization
+//    leader = SelectLeader(marines);
+//    Flock(this, marines, leader, playable_max);
+//
+//    //Get all marines' locations
 
-    //Get the initial group health
-    group_health = GetGroupHealth(marines);
+//DPS _BEG
+//======================================
 
-    //Move all marines to the center of the map on startup
-    for (const auto &marine : marines) {
-        std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
+    //path finder
+    //DPS_PrintObservation("OnGBeg", obs);
+    AStarPathFinder pathFinder(game_info);
+
+    Point2DI src(30, 30);           //source
+    Point2DI dst(60, 60);           //destination
+    std::vector<Point2DI> outPath;  //output path
+
+    //find path
+    if (pathFinder.FindPath(src, dst, outPath))
+    {
+        //print output path 
+        PrintBestPath(outPath);
     }
-    //Pick a leader and flock units on initialization
-    leader = SelectLeader(marines);
-    Flock(this, marines, leader, playable_max);
+    else
+    {
+        //path not found, error printed to console now
+        std::cout << "Failed to find path" << std::endl;
+    }
 
-    //Get all marines' locations
+//======================================
+//DPS END
 }
 
 void PathingBot::OnStep() {
@@ -161,6 +188,99 @@ void PathingBot::OnUnitIdle(const Unit* unit) {
         }
     }
 }
+
+//DPS _BEG
+//======================================
+////! In non realtime games this function gets called after each step as indicated by step size.
+////! In realtime this function gets called as often as possible after request/responses are received from the game gathering observation state.
+//void PathingBot::OnStep()
+//{
+//    //DPS_Print(__FUNCTION__); //a lot
+//}
+//
+////! Called when a game has ended.
+//void PathingBot::OnGameEnd()
+//{
+//    DPS_Print(__FUNCTION__);
+//}
+//
+//! Called when a unit becomes idle, this will only occur as an event so will only be called when the unit becomes
+//! idle and not a second time. Being idle is defined by having orders in the previous step and not currently having
+//! orders or if it did not exist in the previous step and now does, a unit being created, for instance, will call both
+//! OnUnitCreated and OnUnitIdle if it does not have a rally set.
+//!< \param unit The idle unit.
+//void PathingBot::OnUnitIdle(const Unit* unit)
+//{
+//    //only marines were seen
+//    //DPS_PrintUnit(__FUNCTION__, unit);
+//}
+
+//======================================
+
+////! Called when a game is started after a load. Fast restarting will not call this.
+//void PathingBot::OnGameFullStart()
+//{
+//    DPS_Print(__FUNCTION__);
+//}
+//
+////! Called whenever one of the player's units has been destroyed.
+////!< \param unit The destroyed unit.
+//void PathingBot::OnUnitDestroyed(const Unit* unit)
+//{
+//    //only marines were seen
+//    //DPS_PrintUnit(__FUNCTION__, unit);
+//}
+//
+////! Called when a Unit has been created by the player.
+////!< \param unit The created unit.
+//void PathingBot::OnUnitCreated(const Unit* unit)
+//{
+//    //only marines were seen
+//    //DPS_PrintUnit(__FUNCTION__, unit);
+//}
+//
+////! Called when an upgrade is finished, warp gate, ground weapons, baneling speed, etc.
+////!< \param upgrade The completed upgrade.
+//void PathingBot::OnUpgradeCompleted(UpgradeID id)
+//{
+//    DPS_Print(__FUNCTION__);
+//}
+//
+////! Called when the unit in the previous step had a build progress less than 1.0 but is greater than or equal to 1.0 in the current step.
+////!< \param unit The constructed unit.
+//void PathingBot::OnBuildingConstructionComplete(const Unit* unit)
+//{
+//    DPS_PrintUnit(__FUNCTION__, unit);
+//}
+//
+////! Called when a nydus is placed.
+//void PathingBot::OnNydusDetected()
+//{
+//    DPS_Print(__FUNCTION__);
+//}
+//
+////! Called when a nuclear launch is detected.
+//void PathingBot::OnNuclearLaunchDetected()
+//{
+//    DPS_Print(__FUNCTION__);
+//}
+//
+////! Called when an enemy unit enters vision from out of fog of war.
+////!< \param unit The unit entering vision.
+//void PathingBot::OnUnitEnterVision(const Unit* unit)
+//{
+//    //only roaches were seen
+//    //DPS_PrintUnit(__FUNCTION__, unit);
+//}
+//
+////! Called for various errors the library can encounter. See ClientError enum for possible errors.
+//void PathingBot::OnError(const std::vector<ClientError>& clientErr, const std::vector<std::string>& protoErr)
+//{
+//    DPS_Print(__FUNCTION__);
+//}
+
+//======================================
+//DPS END
 
 const Unit* PathingBot::SelectLeader(const Units& units) {
     if (units.size() == 0) {
