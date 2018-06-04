@@ -11,7 +11,7 @@ sc2::Units marines; //group of marines in the simulation
 sc2::Units roaches; //group of enemy roaches
 sc2::Point2D goal; //Goal point for A*
 
-//Conditions
+//Bot Checkpoints
 bool centered = false; //indicates group of marines initially was centered on the map
 bool separated = false; //indicates the group has been separated out
 bool goal_reached = false; //indicates the group of units has reached its goal.
@@ -19,33 +19,6 @@ bool goal_reached = false; //indicates the group of units has reached its goal.
 //Original
 //using namespace sc2;
 namespace sc2 {
-Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) {
-    int image_width = game_info.options.feature_layer.minimap_resolution_x;
-    int image_height = game_info.options.feature_layer.minimap_resolution_y;
-    float map_width = (float)game_info.width;
-    float map_height = (float)game_info.height;
-    std::cout << "Map " << game_info.map_name << std::endl;
-    std::cout << "Width " << game_info.options.feature_layer.minimap_resolution_x << std::endl;
-    std::cout << "Height: " << game_info.options.feature_layer.minimap_resolution_y << std::endl;
-
-
-    // Pixels always cover a square amount of world space. The scale is determined
-    // by the largest axis of the map.
-    float pixel_size = std::max(map_width / image_width, map_height / image_height);
-
-    // Origin of world space is bottom left. Origin of image space is top left.
-    // Upper left corner of the map corresponds to the upper left corner of the upper
-    // left pixel of the feature layer.
-    float image_origin_x = 0;
-    float image_origin_y = map_height;
-    float image_relative_x = world.x - image_origin_x;
-    float image_relative_y = image_origin_y - world.y;
-
-    int image_x = static_cast<int>((image_relative_x / pixel_size));
-    int image_y = static_cast<int>((image_relative_y / pixel_size));
-
-    return Point2DI(image_x, image_y);
-}
 
 void PathingBot::OnGameStart() {
     const ObservationInterface* obs = Observation();
@@ -253,6 +226,34 @@ bool CheckGoalReached(const Unit* leader, Point2D goal) {
     }
     //std::cout << "\tDEBUG: leader is " << Distance2D(leader->pos, goal) << " from the goal\n";
     return(IsNear(leader, goal, GOAL_RADIUS));
+}
+
+Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) {
+    int image_width = game_info.options.feature_layer.minimap_resolution_x;
+    int image_height = game_info.options.feature_layer.minimap_resolution_y;
+    float map_width = (float)game_info.width;
+    float map_height = (float)game_info.height;
+    std::cout << "Map " << game_info.map_name << std::endl;
+    std::cout << "Width " << game_info.options.feature_layer.minimap_resolution_x << std::endl;
+    std::cout << "Height: " << game_info.options.feature_layer.minimap_resolution_y << std::endl;
+
+
+    // Pixels always cover a square amount of world space. The scale is determined
+    // by the largest axis of the map.
+    float pixel_size = std::max(map_width / image_width, map_height / image_height);
+
+    // Origin of world space is bottom left. Origin of image space is top left.
+    // Upper left corner of the map corresponds to the upper left corner of the upper
+    // left pixel of the feature layer.
+    float image_origin_x = 0;
+    float image_origin_y = map_height;
+    float image_relative_x = world.x - image_origin_x;
+    float image_relative_y = image_origin_y - world.y;
+
+    int image_x = static_cast<int>((image_relative_x / pixel_size));
+    int image_y = static_cast<int>((image_relative_y / pixel_size));
+
+    return Point2DI(image_x, image_y);
 }
 
 /* ***** NOT WORKING/UNUSED FUNCTIONS***** */
