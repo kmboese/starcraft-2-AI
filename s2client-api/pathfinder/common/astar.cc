@@ -8,10 +8,6 @@ using namespace std;
 
 #include "astar.h"
 
-//void GoodbyeCruelWorld() {
-//    std::cout << "Goodbye, cruel world!" << std::endl;
-//}
-
 void DPS_Print(const char* msg)
 {
     if (msg)
@@ -119,6 +115,9 @@ void DPS_PrintUnit(const char* msg, const sc2::Unit* unit)
     cout << endl;
 }
 
+//namespace
+namespace sc2
+{
 
 #define DIST_DIAG 1.41421356237f
 #define DIST_HZVT 1.0f
@@ -144,16 +143,18 @@ struct posInfo
     double h;
 };
 
-struct PositionState
+class AStarPathFinder
 {
-    const sc2::GameInfo* mGameInfo;
-    unsigned char* mData;  //grid
-    int mWidth;     //width
-    int mHeight;    //height
-    int mSize;      //size
-    Pair mSrc;      //source
-    Pair mDst;      //destination
-    posInfo* mpPosInfo; //position info array
+public:
+    const GameInfo* mGameInfo;     //game info
+    unsigned char* mData;          //grid
+    int mWidth;                    //width
+    int mHeight;                   //height
+    int mSize;                     //size
+    Pair mSrc;                     //source
+    Pair mDst;                     //destination
+    posInfo* mpPosInfo;            //position info array
+    vector<Point2DI>* mpPath;      //path on output
 
     //open list, as set of pair of pair <f, <row, col>>, with f = g + h
     set<pPair> openList;
@@ -171,7 +172,7 @@ struct PositionState
             mpPosInfo[i].g = FLT_MAX;
             mpPosInfo[i].h = FLT_MAX;
         }
-     }
+    }
 
     //exit position info array
     void ExitPosInfo()
@@ -181,18 +182,21 @@ struct PositionState
     }
 
     //find path via A-star search algorithm
-    void FindPath(const sc2::GameInfo& game_info, Pair& src, Pair& dst)
+    void FindPath(const GameInfo& game_info, Point2DI& src, Point2DI& dst, vector<Point2DI>& outPath)
     {
-
-        //grid, source and destination
+        //input
         mGameInfo = &game_info;
         const sc2::ImageData& imd = mGameInfo->pathing_grid;
         mData = (unsigned char*)imd.data.c_str();
         mWidth = imd.width;
         mHeight = imd.height;
         mSize = mWidth * mHeight;
-        mSrc = src;
-        mDst = dst;
+        mSrc = make_pair(src.x, src.y);
+        mDst = make_pair(dst.x, dst.y);
+
+        //output
+        mpPath = &outPath;
+        mpPath->clear();
 
         //src out of range
         if (!IsValid(mSrc.first, mSrc.second))
@@ -422,7 +426,6 @@ struct PositionState
     //traces resulting path
     void TracePath()
     {
-        cout << "The Path is ";
         int x = mDst.first;
         int y = mDst.second;
         int pos = GetGridPos(x, y);
@@ -438,38 +441,57 @@ struct PositionState
             y = temp_y;
             pos = GetGridPos(x, y);
         }
-
         Path.push(make_pair(x, y));
+
         while (!Path.empty())
         {
             pair<int, int> p = Path.top();
             Path.pop();
-            cout << "-> (" << p.first << "," << p.second << ") ";
+            Point2DI pt(p.first, p.second);
+            mpPath->push_back(pt);
         }
-        cout << std::endl;
     }
 
     //prints error
-    void PrintError(const char* msg)
-    {
-        if (msg)
-            cout << msg << endl;
-    }
+    void PrintError(const char* msg);
 };
 
-
-void FindBestPathTest3(const sc2::GameInfo& game_info)
+//prints error message
+void AStarPathFinder::PrintError(const char* msg)
 {
-    std::cout << "Find Best Path Test2" << std::endl;
+    if (msg)
+        cout << msg << endl;
+}
 
-    //source at left-bottom
-    Pair src = make_pair(30, 30);
-    //destination at left-top
-    Pair dst = make_pair(60, 60);
+//prints best path
+void PrintBestPath(vector<Point2DI>& outPath)
+{
+    cout << "The path: ";
+    if (outPath.empty())
+    {
+        cout << "EMPTY";
+    }
+    else
+    {
+        for (vector<Point2DI>::iterator it = outPath.begin(); it != outPath.end(); ++it)
+        {
+            Point2DI& pt = *it;
+            cout << "-> (" << pt.x << "," << pt.y << ") ";
+        }
+    }
+    cout << endl;
+}
+
+
+void FindBestPathTest(const GameInfo& game_info, Point2DI& src, Point2DI& dst, vector<Point2DI>& outPath)
+{
+    cout << "Find Best Path Test" << endl;
 
     //path finder
-    PositionState posState;
+    AStarPathFinder pathFinder;
 
     //find path
-    posState.FindPath(game_info, src, dst);
+    pathFinder.FindPath(game_info, src, dst, outPath);
 }
+
+} //namespace sc2

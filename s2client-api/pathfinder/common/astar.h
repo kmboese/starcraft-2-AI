@@ -1,7 +1,12 @@
 #include "sc2api/sc2_api.h"
 
 //void GoodbyeCruelWorld();
-void FindBestPathTest3(const sc2::GameInfo& game_info);
+namespace sc2
+{
+    void FindBestPathTest(const GameInfo& game_info, Point2DI& src, Point2DI& dst, std::vector<Point2DI>& outPath);
+    void PrintBestPath(std::vector<Point2DI>& outPath);
+
+} //namespace sc2
 
 
 #include "sc2api/sc2_unit.h"
