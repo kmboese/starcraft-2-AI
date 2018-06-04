@@ -1,17 +1,127 @@
-#include "astar.h"
-
-#include <iostream>
-#include <string>
-#include <utility> //for pair
-#include <stack>   //for stack
-
 #include "sc2lib/sc2_lib.h"
 
-void GoodbyeCruelWorld() {
-    std::cout << "Goodbye, cruel world!" << std::endl;
+#include <iostream>
+#include <iomanip>
+#include <utility> //for pair
+#include <stack>   //for stack
+using namespace std;
+
+#include "astar.h"
+
+//void GoodbyeCruelWorld() {
+//    std::cout << "Goodbye, cruel world!" << std::endl;
+//}
+
+void DPS_Print(const char* msg)
+{
+    if (msg)
+        cout << msg << endl;
 }
 
-using namespace std;
+void DPS_PrintImageDataValues(const sc2::ImageData& imd)
+{
+    if (imd.bits_per_pixel != 8)
+    {
+        cout << "BPS of (" << imd.bits_per_pixel << ") not printable yet" << endl;
+        return;
+    }
+    cout << setfill('0') << uppercase;
+    for (int row = 0; row < imd.height; row++)
+    {
+        cout << dec << setw(4) << row << ": " << hex;
+        for (int col = 0; col < imd.width; col++)
+        {
+            int ix = (row * imd.width) + col;
+            unsigned int v = (unsigned int)(unsigned char)imd.data[ix];
+            cout << setw(2) << v << ".";
+        }
+        cout << endl;
+    }
+    cout << nouppercase << dec << "======================================" << endl;
+}
+
+void DPS_PrintImageData(const char* msg, const sc2::ImageData& imd, bool printData)
+{
+    cout << "Image Data";
+    if (msg)
+        cout << " (" << msg << ")";
+    cout << " :)" << endl;
+    cout << "Size: (" << imd.width << ", " << imd.height << ") = " << (imd.width * imd.height) << endl;
+    cout << "BPS: " << imd.bits_per_pixel << endl;
+    if (printData)
+        DPS_PrintImageDataValues(imd);
+}
+
+void DPS_PrintGameInfo(const char* msg, const sc2::GameInfo& game_info)
+{
+    if (msg)
+        cout << msg << ": ";
+    cout << "GameInfo: " << endl;
+    //! Plain text name of a map. Note that this may be different from the filename of the map.
+    cout << "Map Name: [" << game_info.map_name << "]" << endl;
+    //! Filename of map. Includes the ".SC2Map" file extension.
+    cout << "File Name: [" << game_info.local_map_path << "]" << endl;
+    //! World width of a map.
+    //! World height of a map.
+    cout << "World W/H of a map: (" << game_info.width << ", " << game_info.height << ")" << endl;
+    //! The minimum coordinates of playable space. Points less than this are not playable.
+    cout << "Min playable: (" << game_info.playable_min.x << ", " << game_info.playable_min.y << ")" << endl;
+    //! The maximum coordinates of playable space. Points greater than this are not playable.
+    cout << "Max playable: (" << game_info.playable_max.x << ", " << game_info.playable_max.y << ")" << endl;
+    //! Positions of possible enemy starting locations.
+    cout << "Enemy start locs: (" << game_info.enemy_start_locations.size() << ")" << endl;
+    for (size_t i = 0; i < game_info.enemy_start_locations.size(); i++)
+    {
+        cout << "\t" << i << ": (" << game_info.enemy_start_locations[i].x << ", " << game_info.enemy_start_locations[i].y << ")" << endl;
+    }
+    cout << "Other start locs: (" << game_info.start_locations.size() << ")" << endl;
+    for (size_t i = 0; i < game_info.start_locations.size(); i++)
+    {
+        cout << "\t" << i << ": (" << game_info.start_locations[i].x << ", " << game_info.start_locations[i].y << ")" << endl;
+    }
+    //! Grid showing which cells are pathable by units.
+    DPS_PrintImageData("Pathable Cells", game_info.pathing_grid, true);
+    //! Height map of terrain.
+    DPS_PrintImageData("Terrain Height", game_info.terrain_height, true);
+    //! Grid showing which cells can accept placement of structures.
+    DPS_PrintImageData("Placement-Able", game_info.placement_grid, true);
+    cout << "-------" << endl;
+}
+
+void DPS_PrintObservation(const char* msg, const sc2::ObservationInterface* obs)
+{
+    if (msg)
+        cout << msg << ": ";
+    cout << "Observation ...";
+    cout << endl;
+    const sc2::GameInfo& game_info = obs->GetGameInfo();
+    DPS_PrintGameInfo(NULL, game_info);
+}
+
+void DPS_PrintUnit(const char* msg, const sc2::Unit* unit)
+{
+    if (msg)
+        cout << msg << ": ";
+    cout << "Unit " << unit->tag << " ";
+    switch (unit->unit_type.ToType())
+    {
+    case sc2::UNIT_TYPEID::TERRAN_MARINE: //48
+        cout << "TERRAN_MARINE";
+        break;
+    case sc2::UNIT_TYPEID::ZERG_ROACH: //110
+        cout << "ZERG_ROACH";
+        break;
+    default:
+        cout << "Type " << (int)unit->unit_type.ToType();
+        break;
+    }
+    cout << " (" << unit->pos.x << ", " << unit->pos.y << ", " << unit->pos.z << ")";
+    cout << endl;
+}
+
+
+#define DIST_DIAG 1.41421356237f
+#define DIST_HZVT 1.0f
 
 #define ROW 9
 #define COL 10
@@ -23,524 +133,345 @@ typedef pair<int, int> Pair;
 //'double' is for 'f', where f = g + h
 typedef pair<double, pair<int, int>> pPair;
 
-
 //position state info
 struct posInfo
 {
-    //parent indices
-    int parentRow;
-    int parentCol;
+    //whether closed (processed) position
+    bool closed;
+    //parent position
+    int parentX;
+    int parentY;
     //values, f = g + h
     double f;
     double g;
     double h;
 };
 
-
-//prints error
-void PrintError(const char* msg)
+struct PositionState
 {
-    if (msg)
-        cout << msg << endl;
-}
-
-//whether position is in valid range
-bool isValid(int row, int col)
-{
-    return (row >= 0) && (row < ROW) && (col >= 0) && (col < COL);
-}
-
-
-//whether position is available for use (clear, not blocked)
-bool isClear(int grid[][COL], int row, int col)
-{
-    if (grid[row][col] == 1)
-        return true; //clear
-    return false; //obstacle
-}
-
-
-//whether position is the destination
-bool isDst(int row, int col, Pair dst)
-{
-    if (row == dst.first && col == dst.second)
-        return true; //destination
-    return false; //not destination
-}
-
-
-//calculate 'h' heuristics.
-double calculateHValue(int row, int col, Pair dst)
-{
-    //cost difference (distance) formula
-    return ((double)sqrt((row - dst.first)*(row - dst.first)
-        + (col - dst.second)*(col - dst.second)));
-}
-
-//traces resulting path
-void tracePath(posInfo posData[][COL], Pair dst)
-{
-    cout << "The Path is ";
-    int row = dst.first;
-    int col = dst.second;
-
-    stack<Pair> Path;
-
-    while (!(posData[row][col].parentRow == row && posData[row][col].parentCol == col))
-    {
-        Path.push(make_pair(row, col));
-        int temp_row = posData[row][col].parentRow;
-        int temp_col = posData[row][col].parentCol;
-        row = temp_row;
-        col = temp_col;
-    }
-
-    Path.push(make_pair(row, col));
-    while (!Path.empty())
-    {
-        pair<int, int> p = Path.top();
-        Path.pop();
-        cout << "-> (" << p.first << "," << p.second << ") ";
-    }
-    cout << std::endl;
-}
-
-//find best path via A-star search algorithm
-void FindBestPath(int graph[][COL], Pair src, Pair dst)
-{
-    cout << "Find Best Path Run" << endl;
-
-    //src out of range
-    if (!isValid(src.first, src.second))
-    {
-        PrintError("Path source is invalid");
-        return;
-    }
-
-    //dst out of range
-    if (!isValid(dst.first, dst.second))
-    {
-        PrintError("Path destination is invalid");
-        return;
-    }
-
-    //src or dst not available
-    if (!isClear(graph, src.first, src.second) || !isClear(graph, dst.first, dst.second))
-    {
-        PrintError("Path source or destination not available");
-        return;
-    }
-
-    //src and dst same
-    if (isDst(src.first, src.second, dst))
-    {
-        PrintError("Path source or destination are same");
-        return;
-    }
-
-    //list of processed (closed) positions
-    //boolean 2D array, with all positions initially set to false
-    bool closedList[ROW][COL];
-    memset(closedList, false, sizeof(closedList));
-
-    //2D position info array
-    posInfo posData[ROW][COL];
-
-    int i;
-    int j;
-
-    //init position info array
-    for (i = 0; i<ROW; i++)
-    {
-        for (j = 0; j<COL; j++)
-        {
-            posData[i][j].f = FLT_MAX;
-            posData[i][j].g = FLT_MAX;
-            posData[i][j].h = FLT_MAX;
-            posData[i][j].parentRow = -1;
-            posData[i][j].parentCol = -1;
-        }
-    }
-
-    //init info for src position
-    i = src.first;
-    j = src.second;
-    posData[i][j].f = 0.0;
-    posData[i][j].g = 0.0;
-    posData[i][j].h = 0.0;
-    posData[i][j].parentRow = i;
-    posData[i][j].parentCol = j;
+    int* mIntData;  //grid
+    Pair mSrc;      //source
+    Pair mDst;      //destination
+    posInfo* mpPosInfo; //position info array
 
     //open list, as set of pair of pair <f, <row, col>>, with f = g + h
     set<pPair> openList;
 
-    //put src into open list, with f = 0
-    openList.insert(make_pair(0.0, make_pair(i, j)));
+    //init position info array
+    void InitPosInfo()
+    {
+        int size = ROW * COL;
+        mpPosInfo = new posInfo[size];
+        for (int i = 0; i < size; i++)
+        {
+            mpPosInfo[i].closed = false;
+            mpPosInfo[i].parentX = -1;
+            mpPosInfo[i].parentY = -1;
+            mpPosInfo[i].f = FLT_MAX;
+            mpPosInfo[i].g = FLT_MAX;
+            mpPosInfo[i].h = FLT_MAX;
+        }
+     }
 
-    //whether best path found
-    bool pathFound = false;
+    //exit position info array
+    void ExitPosInfo()
+    {
+        delete[] mpPosInfo;
+        mpPosInfo = NULL;
+    }
 
-    //search
-    while (!openList.empty())
+    //find path via A-star search algorithm
+    void FindPath(int* pData, Pair& src, Pair& dst)
+    {
+        //grid, source and destination
+        mIntData = pData;
+        mSrc = src;
+        mDst = dst;
+
+        //src out of range
+        if (!IsValid(mSrc.first, mSrc.second))
+        {
+            PrintError("Path source is invalid");
+            return;
+        }
+
+        //dst out of range
+        if (!IsValid(mDst.first, mDst.second))
+        {
+            PrintError("Path destination is invalid");
+            return;
+        }
+
+        //src or dst not available
+        if (!IsClear(mSrc.first, mSrc.second) || !IsClear(mDst.first, mDst.second))
+        {
+            PrintError("Path source or destination not available");
+            return;
+        }
+
+        //src and dst same
+        if (IsDst(mSrc.first, mSrc.second))
+        {
+            PrintError("Path source or destination are same");
+            return;
+        }
+
+        //init position info array
+        InitPosInfo();
+
+        //put src into open list, with f = g = h = 0
+        int x = mSrc.first;
+        int y = mSrc.second;
+        UpdateOpenList(x, y, 0.0, 0.0, x, y);
+
+        //search path
+        while (!openList.empty())
+        {
+            //update path in all directions
+            if (UpdatePath())
+            {
+                //exit position info array
+                ExitPosInfo();
+                return;
+            }
+        }
+
+        //exit position info array
+        ExitPosInfo();
+
+        //failed to find path
+        PrintError("Failed to find path");
+    }
+
+    //update path
+    bool UpdatePath()
     {
         //get open position, remove it from open list
         pPair p = *openList.begin();
         openList.erase(openList.begin());
 
+        //current position
+        int x = p.second.first;
+        int y = p.second.second;
+
         //mark removed position as processed (closed)
-        i = p.second.first;
-        j = p.second.second;
-        closedList[i][j] = true;
+        int pos = GetGridPos(x, y);
+        mpPosInfo[pos].closed = true;
 
         //8 possible successors for the removed position are possible
-        //local storage for f, g, h of these successors
-        double fNew;
-        double gNew;
-        double hNew;
 
-        //north, if valid
-        if (isValid(i - 1, j))
+        //update north direction
+        if (UpdateDirection(x - 1, y, DIST_HZVT, x, y))
+            return true;
+
+        //update south direction
+        if (UpdateDirection(x + 1, y, DIST_HZVT, x, y))
+            return true;
+
+        //update east direction
+        if (UpdateDirection(x, y + 1, DIST_HZVT, x, y))
+            return true;
+
+        //update west direction
+        if (UpdateDirection(x, y - 1, DIST_HZVT, x, y))
+            return true;
+
+        //update north-east direction
+        if (UpdateDirection(x - 1, y + 1, DIST_DIAG, x, y))
+            return true;
+
+        //update north-west direction
+        if (UpdateDirection(x - 1, y - 1, DIST_DIAG, x, y))
+            return true;
+
+        //update south-east direction
+        if (UpdateDirection(x + 1, y + 1, DIST_DIAG, x, y))
+            return true;
+
+        //update south-west direction
+        if (UpdateDirection(x + 1, y - 1, DIST_DIAG, x, y))
+            return true;
+
+        //not complete
+        return false;
+    }
+
+    //update direction
+    bool UpdateDirection(int x, int y, double cost, int prevX, int prevY)
+    {
+        //position in range
+        if (IsValid(x, y))
         {
-            //dst reached
-            if (isDst(i - 1, j, dst))
-            {
-                //save parent info
-                posData[i - 1][j].parentRow = i;
-                posData[i - 1][j].parentCol = j;
-                tracePath(posData, dst);
-                pathFound = true;
-                return;
-            }
+            //done if path complete
+            if (CompletePath(x, y, prevX, prevY))
+                return true;
 
-            //skip if already processed, or if unavailable
-            else if (!closedList[i - 1][j] && isClear(graph, i - 1, j))
-            {
-                //new f, g, h
-                gNew = posData[i][j].g + 1.0;
-                hNew = calculateHValue(i - 1, j, dst);
-                fNew = gNew + hNew;
-
-                //if not in open list, add to open list
-                //otherwise update in open list if new cost is better
-                if (posData[i - 1][j].f == FLT_MAX || posData[i - 1][j].f > fNew)
-                {
-                    //insert 
-                    openList.insert(make_pair(fNew, make_pair(i - 1, j)));
-
-                    //update info
-                    posData[i - 1][j].f = fNew;
-                    posData[i - 1][j].g = gNew;
-                    posData[i - 1][j].h = hNew;
-                    posData[i - 1][j].parentRow = i;
-                    posData[i - 1][j].parentCol = j;
-                }
-            }
+            //update position
+            UpdatePos(x, y, cost, prevX, prevY);
         }
+        return false; //not completed
+    }
 
-        //south, if valid
-        if (isValid(i + 1, j))
+    //complete path
+    bool CompletePath(int x, int y, int prevX, int prevY)
+    {
+        //dst not reached
+        if (!IsDst(x, y))
+            return false;
+
+        //dst reached - save parent info and trace the path
+        int pos = GetGridPos(x, y);
+        mpPosInfo[pos].parentX = prevX;
+        mpPosInfo[pos].parentY = prevY;
+        TracePath();
+        return true;
+    }
+
+    //update position
+    void UpdatePos(int x, int y, double cost, int prevX, int prevY)
+    {
+        //update position if not yet closed, and is pathable (not an abstacle)
+        int pos = GetGridPos(x, y);
+        if (!mpPosInfo[pos].closed && IsClear(x, y))
         {
-            //dst reached
-            if (isDst(i + 1, j, dst))
-            {
-                //save parent info
-                posData[i + 1][j].parentRow = i;
-                posData[i + 1][j].parentCol = j;
-                tracePath(posData, dst);
-                pathFound = true;
-                return;
-            }
+            //new g and h
+            int prevPos = GetGridPos(prevX, prevY);
+            double nextG = mpPosInfo[prevPos].g + cost;
+            double nextH = CalculateHValue(x, y);
 
-            //skip if already processed, or if unavailable
-            else if (!closedList[i + 1][j] && isClear(graph, i + 1, j))
-            {
-                //new f, g, h
-                gNew = posData[i][j].g + 1.0;
-                hNew = calculateHValue(i + 1, j, dst);
-                fNew = gNew + hNew;
-
-                //if not in open list, add to open list
-                //otherwise update in open list if new cost is better
-                if (posData[i + 1][j].f == FLT_MAX || posData[i + 1][j].f > fNew)
-                {
-                    //insert 
-                    openList.insert(make_pair(fNew, make_pair(i + 1, j)));
-
-                    //update info
-                    posData[i + 1][j].f = fNew;
-                    posData[i + 1][j].g = gNew;
-                    posData[i + 1][j].h = hNew;
-                    posData[i + 1][j].parentRow = i;
-                    posData[i + 1][j].parentCol = j;
-                }
-            }
-        }
-
-        //east, if valid
-        if (isValid(i, j + 1))
-        {
-            //dst reached
-            if (isDst(i, j + 1, dst))
-            {
-                //save parent info
-                posData[i][j + 1].parentRow = i;
-                posData[i][j + 1].parentCol = j;
-                tracePath(posData, dst);
-                pathFound = true;
-                return;
-            }
-
-            //skip if already processed, or if unavailable
-            else if (!closedList[i][j + 1] && isClear(graph, i, j + 1))
-            {
-                //new f, g, h
-                gNew = posData[i][j].g + 1.0;
-                hNew = calculateHValue(i, j + 1, dst);
-                fNew = gNew + hNew;
-
-                //if not in open list, add to open list
-                //otherwise update in open list if new cost is better
-                if (posData[i][j + 1].f == FLT_MAX || posData[i][j + 1].f > fNew)
-                {
-                    //insert 
-                    openList.insert(make_pair(fNew, make_pair(i, j + 1)));
-
-                    //update info
-                    posData[i][j + 1].f = fNew;
-                    posData[i][j + 1].g = gNew;
-                    posData[i][j + 1].h = hNew;
-                    posData[i][j + 1].parentRow = i;
-                    posData[i][j + 1].parentCol = j;
-                }
-            }
-        }
-
-        //west, if valid
-        if (isValid(i, j - 1))
-        {
-            //dst reached
-            if (isDst(i, j - 1, dst))
-            {
-                //save parent info
-                posData[i][j - 1].parentRow = i;
-                posData[i][j - 1].parentCol = j;
-                tracePath(posData, dst);
-                pathFound = true;
-                return;
-            }
-
-            //skip if already processed, or if unavailable
-            else if (!closedList[i][j - 1] && isClear(graph, i, j - 1))
-            {
-                //new f, g, h
-                gNew = posData[i][j].g + 1.0;
-                hNew = calculateHValue(i, j - 1, dst);
-                fNew = gNew + hNew;
-
-                //if not in open list, add to open list
-                //otherwise update in open list if new cost is better
-                if (posData[i][j - 1].f == FLT_MAX || posData[i][j - 1].f > fNew)
-                {
-                    //insert 
-                    openList.insert(make_pair(fNew, make_pair(i, j - 1)));
-
-                    //update info
-                    posData[i][j - 1].f = fNew;
-                    posData[i][j - 1].g = gNew;
-                    posData[i][j - 1].h = hNew;
-                    posData[i][j - 1].parentRow = i;
-                    posData[i][j - 1].parentCol = j;
-                }
-            }
-        }
-
-        //north-east, if valid
-        if (isValid(i - 1, j + 1))
-        {
-            //dst reached
-            if (isDst(i - 1, j + 1, dst))
-            {
-                //save parent info
-                posData[i - 1][j + 1].parentRow = i;
-                posData[i - 1][j + 1].parentCol = j;
-                tracePath(posData, dst);
-                pathFound = true;
-                return;
-            }
-
-            //skip if already processed, or if unavailable
-            else if (!closedList[i - 1][j + 1] && isClear(graph, i - 1, j + 1))
-            {
-                //new f, g, h
-                gNew = posData[i][j].g + 1.414;
-                hNew = calculateHValue(i - 1, j + 1, dst);
-                fNew = gNew + hNew;
-
-                //if not in open list, add to open list
-                //otherwise update in open list if new cost is better
-                if (posData[i - 1][j + 1].f == FLT_MAX || posData[i - 1][j + 1].f > fNew)
-                {
-                    //insert 
-                    openList.insert(make_pair(fNew, make_pair(i - 1, j + 1)));
-
-                    //update info
-                    posData[i - 1][j + 1].f = fNew;
-                    posData[i - 1][j + 1].g = gNew;
-                    posData[i - 1][j + 1].h = hNew;
-                    posData[i - 1][j + 1].parentRow = i;
-                    posData[i - 1][j + 1].parentCol = j;
-                }
-            }
-        }
-
-        //north-west, if valid
-        if (isValid(i - 1, j - 1))
-        {
-            //dst reached
-            if (isDst(i - 1, j - 1, dst))
-            {
-                //save parent info
-                posData[i - 1][j - 1].parentRow = i;
-                posData[i - 1][j - 1].parentCol = j;
-                tracePath(posData, dst);
-                pathFound = true;
-                return;
-            }
-
-            //skip if already processed, or if unavailable
-            else if (!closedList[i - 1][j - 1] && isClear(graph, i - 1, j - 1))
-            {
-                //new f, g, h
-                gNew = posData[i][j].g + 1.414;
-                hNew = calculateHValue(i - 1, j - 1, dst);
-                fNew = gNew + hNew;
-
-                //if not in open list, add to open list
-                //otherwise update in open list if new cost is better
-                if (posData[i - 1][j - 1].f == FLT_MAX || posData[i - 1][j - 1].f > fNew)
-                {
-                    //insert 
-                    openList.insert(make_pair(fNew, make_pair(i - 1, j - 1)));
-
-                    //update info
-                    posData[i - 1][j - 1].f = fNew;
-                    posData[i - 1][j - 1].g = gNew;
-                    posData[i - 1][j - 1].h = hNew;
-                    posData[i - 1][j - 1].parentRow = i;
-                    posData[i - 1][j - 1].parentCol = j;
-                }
-            }
-        }
-
-        //south-east, if valid
-        if (isValid(i + 1, j + 1))
-        {
-            //dst reached
-            if (isDst(i + 1, j + 1, dst))
-            {
-                //save parent info
-                posData[i + 1][j + 1].parentRow = i;
-                posData[i + 1][j + 1].parentCol = j;
-                tracePath(posData, dst);
-                pathFound = true;
-                return;
-            }
-
-            //skip if already processed, or if unavailable
-            else if (!closedList[i + 1][j + 1] && isClear(graph, i + 1, j + 1))
-            {
-                //new f, g, h
-                gNew = posData[i][j].g + 1.414;
-                hNew = calculateHValue(i + 1, j + 1, dst);
-                fNew = gNew + hNew;
-
-                //if not in open list, add to open list
-                //otherwise update in open list if new cost is better
-                if (posData[i + 1][j + 1].f == FLT_MAX || posData[i + 1][j + 1].f > fNew)
-                {
-                    //insert 
-                    openList.insert(make_pair(fNew, make_pair(i + 1, j + 1)));
-
-                    //update info
-                    posData[i + 1][j + 1].f = fNew;
-                    posData[i + 1][j + 1].g = gNew;
-                    posData[i + 1][j + 1].h = hNew;
-                    posData[i + 1][j + 1].parentRow = i;
-                    posData[i + 1][j + 1].parentCol = j;
-                }
-            }
-        }
-
-        //south-west, if valid
-        if (isValid(i + 1, j - 1))
-        {
-            //dst reached
-            if (isDst(i + 1, j - 1, dst))
-            {
-                //save parent info
-                posData[i + 1][j - 1].parentRow = i;
-                posData[i + 1][j - 1].parentCol = j;
-                tracePath(posData, dst);
-                pathFound = true;
-                return;
-            }
-
-            //skip if already processed, or if unavailable
-            else if (!closedList[i + 1][j - 1] && isClear(graph, i + 1, j - 1))
-            {
-                //new f, g, h
-                gNew = posData[i][j].g + 1.414;
-                hNew = calculateHValue(i + 1, j - 1, dst);
-                fNew = gNew + hNew;
-
-                //if not in open list, add to open list
-                //otherwise update in open list if new cost is better
-                if (posData[i + 1][j - 1].f == FLT_MAX || posData[i + 1][j - 1].f > fNew)
-                {
-                    //insert 
-                    openList.insert(make_pair(fNew, make_pair(i + 1, j - 1)));
-
-                    //update info
-                    posData[i + 1][j - 1].f = fNew;
-                    posData[i + 1][j - 1].g = gNew;
-                    posData[i + 1][j - 1].h = hNew;
-                    posData[i + 1][j - 1].parentRow = i;
-                    posData[i + 1][j - 1].parentCol = j;
-                }
-            }
+            //update open linst
+            UpdateOpenList(x, y, nextG, nextH, prevX, prevY);
         }
     }
 
-    //failed to find path
-    if (!pathFound)
-        PrintError("Failed to find path");
-}
+    //if not in open list, add to open list
+    //otherwise update in open list if new cost is better
+    void UpdateOpenList(int x, int y, double nextG, double nextH, int prevX, int prevY)
+    {
+        //new f = g + h
+        double nextF = nextG + nextH;
 
-//test FindBestPath
+        //if not in open list, add to open list
+        //otherwise update in open list if new cost is better
+        int pos = GetGridPos(x, y);
+        if (mpPosInfo[pos].f == FLT_MAX || mpPosInfo[pos].f > nextF)
+        {
+            //insert into open list
+            openList.insert(make_pair(nextF, make_pair(x, y)));
+
+            //update info
+            mpPosInfo[pos].f = nextF;
+            mpPosInfo[pos].g = nextG;
+            mpPosInfo[pos].h = nextH;
+            mpPosInfo[pos].parentX = prevX;
+            mpPosInfo[pos].parentY = prevY;
+        }
+    }
+
+    //calculate 'h' heuristics.
+    double CalculateHValue(int row, int col)
+    {
+        //cost difference (distance) formula
+        return ((double)sqrt((row - mDst.first)*(row - mDst.first)
+            + (col - mDst.second)*(col - mDst.second)));
+    }
+
+    //whether position is in valid range
+    bool IsValid(int row, int col)
+    {
+        return (row >= 0) && (row < ROW) && (col >= 0) && (col < COL);
+    }
+
+    //offset inot grid array
+    int GetGridPos(int x, int y)
+    {
+        return x * COL + y;
+    }
+
+    //whether position is available for use (clear, not blocked)
+    bool IsClear(int x, int y)
+    {
+        int pos = GetGridPos(x, y);
+        if (mIntData[pos] == 1)
+            return true; //clear
+        return false; //obstacle
+    }
+
+    //whether position is the destination
+    bool IsDst(int row, int col)
+    {
+        if (row == mDst.first && col == mDst.second)
+            return true; //destination
+        return false; //not destination
+    }
+
+    //traces resulting path
+    void TracePath()
+    {
+        cout << "The Path is ";
+        int x = mDst.first;
+        int y = mDst.second;
+        int pos = GetGridPos(x, y);
+
+        stack<Pair> Path;
+
+        while (!(mpPosInfo[pos].parentX == x && mpPosInfo[pos].parentY == y))
+        {
+            Path.push(make_pair(x, y));
+            int temp_x = mpPosInfo[pos].parentX;
+            int temp_y = mpPosInfo[pos].parentY;
+            x = temp_x;
+            y = temp_y;
+            pos = GetGridPos(x, y);
+        }
+
+        Path.push(make_pair(x, y));
+        while (!Path.empty())
+        {
+            pair<int, int> p = Path.top();
+            Path.pop();
+            cout << "-> (" << p.first << "," << p.second << ") ";
+        }
+        cout << std::endl;
+    }
+
+    //prints error
+    void PrintError(const char* msg)
+    {
+        if (msg)
+            cout << msg << endl;
+    }
+};
+
+
+//test Astar path finder
 void FindBestPathTest()
 {
     std::cout << "Find Best Path Test" << std::endl;
 
     //1 = clear, no obstacle
     //0 = closed, obstacle
-    int graph[ROW][COL] =
+    int graph[ROW * COL] =
     {
-        { 1, 0, 1, 1, 1, 1, 0, 1, 1, 1 },
-        { 1, 1, 1, 0, 1, 1, 1, 0, 1, 1 },
-        { 1, 1, 1, 0, 1, 1, 0, 1, 0, 1 },
-        { 0, 0, 1, 0, 1, 0, 0, 0, 0, 1 },
-        { 1, 1, 1, 0, 1, 1, 1, 0, 1, 0 },
-        { 1, 0, 1, 1, 1, 1, 0, 1, 0, 0 },
-        { 1, 0, 0, 0, 0, 1, 0, 0, 0, 1 },
-        { 1, 0, 1, 1, 1, 1, 0, 1, 1, 1 },
-        { 1, 1, 1, 0, 0, 0, 1, 0, 0, 1 }
+        1, 0, 1, 1, 1, 1, 0, 1, 1, 1,
+        1, 1, 1, 0, 1, 1, 1, 0, 1, 1,
+        1, 1, 1, 0, 1, 1, 0, 1, 0, 1,
+        0, 0, 1, 0, 1, 0, 0, 0, 0, 1,
+        1, 1, 1, 0, 1, 1, 1, 0, 1, 0,
+        1, 0, 1, 1, 1, 1, 0, 1, 0, 0,
+        1, 0, 0, 0, 0, 1, 0, 0, 0, 1,
+        1, 0, 1, 1, 1, 1, 0, 1, 1, 1,
+        1, 1, 1, 0, 0, 0, 1, 0, 0, 1
     };
 
     //source at left-bottom
     Pair src = make_pair(8, 0);
     //destination at left-top
-    Pair dest = make_pair(0, 0);
+    Pair dst = make_pair(0, 0);
+
+    //path finder
+    PositionState posState;
 
     //find path
-    FindBestPath(graph, src, dest);
+    posState.FindPath(graph, src, dst);
 }
