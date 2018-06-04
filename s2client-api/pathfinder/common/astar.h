@@ -1,7 +1,8 @@
 #include "sc2api/sc2_api.h"
 
 //void GoodbyeCruelWorld();
-void FindBestPathTest();
+void FindBestPathTest3(const sc2::GameInfo& game_info);
+
 
 #include "sc2api/sc2_unit.h"
 void DPS_Print(const char* msg);

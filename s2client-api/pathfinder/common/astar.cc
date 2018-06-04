@@ -123,9 +123,6 @@ void DPS_PrintUnit(const char* msg, const sc2::Unit* unit)
 #define DIST_DIAG 1.41421356237f
 #define DIST_HZVT 1.0f
 
-#define ROW 9
-#define COL 10
-
 //typedef for pair of integers
 typedef pair<int, int> Pair;
 
@@ -149,7 +146,11 @@ struct posInfo
 
 struct PositionState
 {
-    int* mIntData;  //grid
+    const sc2::GameInfo* mGameInfo;
+    unsigned char* mData;  //grid
+    int mWidth;     //width
+    int mHeight;    //height
+    int mSize;      //size
     Pair mSrc;      //source
     Pair mDst;      //destination
     posInfo* mpPosInfo; //position info array
@@ -160,9 +161,8 @@ struct PositionState
     //init position info array
     void InitPosInfo()
     {
-        int size = ROW * COL;
-        mpPosInfo = new posInfo[size];
-        for (int i = 0; i < size; i++)
+        mpPosInfo = new posInfo[mSize];
+        for (int i = 0; i < mSize; i++)
         {
             mpPosInfo[i].closed = false;
             mpPosInfo[i].parentX = -1;
@@ -181,10 +181,16 @@ struct PositionState
     }
 
     //find path via A-star search algorithm
-    void FindPath(int* pData, Pair& src, Pair& dst)
+    void FindPath(const sc2::GameInfo& game_info, Pair& src, Pair& dst)
     {
+
         //grid, source and destination
-        mIntData = pData;
+        mGameInfo = &game_info;
+        const sc2::ImageData& imd = mGameInfo->pathing_grid;
+        mData = (unsigned char*)imd.data.c_str();
+        mWidth = imd.width;
+        mHeight = imd.height;
+        mSize = mWidth * mHeight;
         mSrc = src;
         mDst = dst;
 
@@ -377,22 +383,30 @@ struct PositionState
     }
 
     //whether position is in valid range
-    bool IsValid(int row, int col)
+    bool IsValid(int x, int y)
     {
-        return (row >= 0) && (row < ROW) && (col >= 0) && (col < COL);
+        if (x < mGameInfo->playable_min.x)
+            return false;
+        if (x > mGameInfo->playable_max.x)
+            return false;
+        if (y < mGameInfo->playable_min.y)
+            return false;
+        if (y > mGameInfo->playable_max.y)
+            return false;
+        return true;
     }
 
     //offset inot grid array
     int GetGridPos(int x, int y)
     {
-        return x * COL + y;
+        return x * mWidth + y;
     }
 
     //whether position is available for use (clear, not blocked)
     bool IsClear(int x, int y)
     {
         int pos = GetGridPos(x, y);
-        if (mIntData[pos] == 1)
+        if (mData[pos] == 0)
             return true; //clear
         return false; //obstacle
     }
@@ -444,34 +458,18 @@ struct PositionState
 };
 
 
-//test Astar path finder
-void FindBestPathTest()
+void FindBestPathTest3(const sc2::GameInfo& game_info)
 {
-    std::cout << "Find Best Path Test" << std::endl;
-
-    //1 = clear, no obstacle
-    //0 = closed, obstacle
-    int graph[ROW * COL] =
-    {
-        1, 0, 1, 1, 1, 1, 0, 1, 1, 1,
-        1, 1, 1, 0, 1, 1, 1, 0, 1, 1,
-        1, 1, 1, 0, 1, 1, 0, 1, 0, 1,
-        0, 0, 1, 0, 1, 0, 0, 0, 0, 1,
-        1, 1, 1, 0, 1, 1, 1, 0, 1, 0,
-        1, 0, 1, 1, 1, 1, 0, 1, 0, 0,
-        1, 0, 0, 0, 0, 1, 0, 0, 0, 1,
-        1, 0, 1, 1, 1, 1, 0, 1, 1, 1,
-        1, 1, 1, 0, 0, 0, 1, 0, 0, 1
-    };
+    std::cout << "Find Best Path Test2" << std::endl;
 
     //source at left-bottom
-    Pair src = make_pair(8, 0);
+    Pair src = make_pair(30, 30);
     //destination at left-top
-    Pair dst = make_pair(0, 0);
+    Pair dst = make_pair(60, 60);
 
     //path finder
     PositionState posState;
 
     //find path
-    posState.FindPath(graph, src, dst);
+    posState.FindPath(game_info, src, dst);
 }
