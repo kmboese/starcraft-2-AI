@@ -119,342 +119,248 @@ void DPS_PrintUnit(const char* msg, const sc2::Unit* unit)
 namespace sc2
 {
 
-#define DIST_DIAG 1.41421356237f
-#define DIST_HZVT 1.0f
-
-//typedef for pair of integers
-typedef pair<int, int> Pair;
-
-//typedef for pair<double, pair<int, int>> type
-//'double' is for 'f', where f = g + h
-typedef pair<double, pair<int, int>> pPair;
-
-//position state info
-struct posInfo
+AStarPathFinder::AStarPathFinder(const GameInfo& game_info)
+    : mGameInfo(game_info), mImd(game_info.pathing_grid)
 {
-    //whether closed (processed) position
-    bool closed;
-    //parent position
-    int parentX;
-    int parentY;
-    //values, f = g + h
-    double f;
-    double g;
-    double h;
-};
+    mWidth = mImd.width;
+    mHeight = mImd.height;
+    mSize = mWidth * mHeight;
+    mpPosInfo = new posInfo[mSize];
+}
 
-class AStarPathFinder
+AStarPathFinder::~AStarPathFinder()
 {
-public:
-    const GameInfo* mGameInfo;     //game info
-    unsigned char* mData;          //grid
-    int mWidth;                    //width
-    int mHeight;                   //height
-    int mSize;                     //size
-    Pair mSrc;                     //source
-    Pair mDst;                     //destination
-    posInfo* mpPosInfo;            //position info array
-    vector<Point2DI>* mpPath;      //path on output
+    delete[] mpPosInfo;
+    mpPosInfo = NULL;
+}
 
-    //open list, as set of pair of pair <f, <row, col>>, with f = g + h
-    set<pPair> openList;
 
-    //init position info array
-    void InitPosInfo()
+bool AStarPathFinder::FindPath(Point2DI& src, Point2DI& dst, vector<Point2DI>& outPath)
+{
+    //input
+    mData = (unsigned char*)mImd.data.c_str();
+    mSrc = make_pair(src.x, src.y);
+    mDst = make_pair(dst.x, dst.y);
+
+    //output
+    mpPath = &outPath;
+    mpPath->clear();
+
+    //src out of range
+    if (!IsValid(mSrc.first, mSrc.second))
     {
-        mpPosInfo = new posInfo[mSize];
-        for (int i = 0; i < mSize; i++)
-        {
-            mpPosInfo[i].closed = false;
-            mpPosInfo[i].parentX = -1;
-            mpPosInfo[i].parentY = -1;
-            mpPosInfo[i].f = FLT_MAX;
-            mpPosInfo[i].g = FLT_MAX;
-            mpPosInfo[i].h = FLT_MAX;
-        }
-    }
-
-    //exit position info array
-    void ExitPosInfo()
-    {
-        delete[] mpPosInfo;
-        mpPosInfo = NULL;
-    }
-
-    //find path via A-star search algorithm
-    void FindPath(const GameInfo& game_info, Point2DI& src, Point2DI& dst, vector<Point2DI>& outPath)
-    {
-        //input
-        mGameInfo = &game_info;
-        const sc2::ImageData& imd = mGameInfo->pathing_grid;
-        mData = (unsigned char*)imd.data.c_str();
-        mWidth = imd.width;
-        mHeight = imd.height;
-        mSize = mWidth * mHeight;
-        mSrc = make_pair(src.x, src.y);
-        mDst = make_pair(dst.x, dst.y);
-
-        //output
-        mpPath = &outPath;
-        mpPath->clear();
-
-        //src out of range
-        if (!IsValid(mSrc.first, mSrc.second))
-        {
-            PrintError("Path source is invalid");
-            return;
-        }
-
-        //dst out of range
-        if (!IsValid(mDst.first, mDst.second))
-        {
-            PrintError("Path destination is invalid");
-            return;
-        }
-
-        //src or dst not available
-        if (!IsClear(mSrc.first, mSrc.second) || !IsClear(mDst.first, mDst.second))
-        {
-            PrintError("Path source or destination not available");
-            return;
-        }
-
-        //src and dst same
-        if (IsDst(mSrc.first, mSrc.second))
-        {
-            PrintError("Path source or destination are same");
-            return;
-        }
-
-        //init position info array
-        InitPosInfo();
-
-        //put src into open list, with f = g = h = 0
-        int x = mSrc.first;
-        int y = mSrc.second;
-        UpdateOpenList(x, y, 0.0, 0.0, x, y);
-
-        //search path
-        while (!openList.empty())
-        {
-            //update path in all directions
-            if (UpdatePath())
-            {
-                //exit position info array
-                ExitPosInfo();
-                return;
-            }
-        }
-
-        //exit position info array
-        ExitPosInfo();
-
-        //failed to find path
-        PrintError("Failed to find path");
-    }
-
-    //update path
-    bool UpdatePath()
-    {
-        //get open position, remove it from open list
-        pPair p = *openList.begin();
-        openList.erase(openList.begin());
-
-        //current position
-        int x = p.second.first;
-        int y = p.second.second;
-
-        //mark removed position as processed (closed)
-        int pos = GetGridPos(x, y);
-        mpPosInfo[pos].closed = true;
-
-        //8 possible successors for the removed position are possible
-
-        //update north direction
-        if (UpdateDirection(x - 1, y, DIST_HZVT, x, y))
-            return true;
-
-        //update south direction
-        if (UpdateDirection(x + 1, y, DIST_HZVT, x, y))
-            return true;
-
-        //update east direction
-        if (UpdateDirection(x, y + 1, DIST_HZVT, x, y))
-            return true;
-
-        //update west direction
-        if (UpdateDirection(x, y - 1, DIST_HZVT, x, y))
-            return true;
-
-        //update north-east direction
-        if (UpdateDirection(x - 1, y + 1, DIST_DIAG, x, y))
-            return true;
-
-        //update north-west direction
-        if (UpdateDirection(x - 1, y - 1, DIST_DIAG, x, y))
-            return true;
-
-        //update south-east direction
-        if (UpdateDirection(x + 1, y + 1, DIST_DIAG, x, y))
-            return true;
-
-        //update south-west direction
-        if (UpdateDirection(x + 1, y - 1, DIST_DIAG, x, y))
-            return true;
-
-        //not complete
+        PrintError("Path source is invalid");
         return false;
     }
 
-    //update direction
-    bool UpdateDirection(int x, int y, double cost, int prevX, int prevY)
+    //dst out of range
+    if (!IsValid(mDst.first, mDst.second))
     {
-        //position in range
-        if (IsValid(x, y))
-        {
-            //done if path complete
-            if (CompletePath(x, y, prevX, prevY))
-                return true;
-
-            //update position
-            UpdatePos(x, y, cost, prevX, prevY);
-        }
-        return false; //not completed
+        PrintError("Path destination is invalid");
+        return false;
     }
 
-    //complete path
-    bool CompletePath(int x, int y, int prevX, int prevY)
+    //src or dst not available
+    if (!IsClear(mSrc.first, mSrc.second) || !IsClear(mDst.first, mDst.second))
     {
-        //dst not reached
-        if (!IsDst(x, y))
-            return false;
+        PrintError("Path source or destination not available");
+        return false;
+    }
 
-        //dst reached - save parent info and trace the path
-        int pos = GetGridPos(x, y);
-        mpPosInfo[pos].parentX = prevX;
-        mpPosInfo[pos].parentY = prevY;
-        TracePath();
+    //src and dst same
+    if (IsDst(mSrc.first, mSrc.second))
+    {
+        PrintError("Path source or destination are same");
+        return false;
+    }
+
+    //reset position info array
+    for (int i = 0; i < mSize; i++)
+    {
+        mpPosInfo[i].closed = false;
+        mpPosInfo[i].parentX = -1;
+        mpPosInfo[i].parentY = -1;
+        mpPosInfo[i].f = FLT_MAX;
+        mpPosInfo[i].g = FLT_MAX;
+        mpPosInfo[i].h = FLT_MAX;
+    }
+
+    //put src into open list, with f = g = h = 0
+    int x = mSrc.first;
+    int y = mSrc.second;
+    UpdateOpenList(x, y, 0.0, 0.0, x, y);
+
+    //search path
+    while (!openList.empty())
+    {
+        //update path in all directions
+        if (UpdatePath())
+        {
+            //path found
+            return true;
+        }
+    }
+
+    //failed to find path
+    return false;
+}
+
+bool AStarPathFinder::UpdatePath()
+{
+    //get open position, remove it from open list
+    pPair p = *openList.begin();
+    openList.erase(openList.begin());
+
+    //current position
+    int x = p.second.first;
+    int y = p.second.second;
+
+    //mark removed position as processed (closed)
+    int pos = GetGridPos(x, y);
+    mpPosInfo[pos].closed = true;
+
+    //8 possible successors for the removed position are possible
+
+    //update north direction
+    if (UpdateDirection(x - 1, y, DIST_HZVT, x, y))
         return true;
-    }
 
-    //update position
-    void UpdatePos(int x, int y, double cost, int prevX, int prevY)
+    //update south direction
+    if (UpdateDirection(x + 1, y, DIST_HZVT, x, y))
+        return true;
+
+    //update east direction
+    if (UpdateDirection(x, y + 1, DIST_HZVT, x, y))
+        return true;
+
+    //update west direction
+    if (UpdateDirection(x, y - 1, DIST_HZVT, x, y))
+        return true;
+
+    //update north-east direction
+    if (UpdateDirection(x - 1, y + 1, DIST_DIAG, x, y))
+        return true;
+
+    //update north-west direction
+    if (UpdateDirection(x - 1, y - 1, DIST_DIAG, x, y))
+        return true;
+
+    //update south-east direction
+    if (UpdateDirection(x + 1, y + 1, DIST_DIAG, x, y))
+        return true;
+
+    //update south-west direction
+    if (UpdateDirection(x + 1, y - 1, DIST_DIAG, x, y))
+        return true;
+
+    //not complete
+    return false;
+}
+
+bool AStarPathFinder::UpdateDirection(int x, int y, double cost, int prevX, int prevY)
+{
+    //position in range
+    if (IsValid(x, y))
     {
-        //update position if not yet closed, and is pathable (not an abstacle)
-        int pos = GetGridPos(x, y);
-        if (!mpPosInfo[pos].closed && IsClear(x, y))
-        {
-            //new g and h
-            int prevPos = GetGridPos(prevX, prevY);
-            double nextG = mpPosInfo[prevPos].g + cost;
-            double nextH = CalculateHValue(x, y);
+        //done if path complete
+        if (CompletePath(x, y, prevX, prevY))
+            return true;
 
-            //update open linst
-            UpdateOpenList(x, y, nextG, nextH, prevX, prevY);
-        }
+        //update position
+        UpdatePos(x, y, cost, prevX, prevY);
     }
+    return false; //not completed
+}
+
+
+bool AStarPathFinder::CompletePath(int x, int y, int prevX, int prevY)
+{
+    //dst not reached
+    if (!IsDst(x, y))
+        return false;
+
+    //dst reached - save parent info and trace the path
+    int pos = GetGridPos(x, y);
+    mpPosInfo[pos].parentX = prevX;
+    mpPosInfo[pos].parentY = prevY;
+    TracePath();
+    return true;
+}
+
+
+void AStarPathFinder::UpdatePos(int x, int y, double cost, int prevX, int prevY)
+{
+    //update position if not yet closed, and is pathable (not an abstacle)
+    int pos = GetGridPos(x, y);
+    if (!mpPosInfo[pos].closed && IsClear(x, y))
+    {
+        //new g and h
+        int prevPos = GetGridPos(prevX, prevY);
+        double nextG = mpPosInfo[prevPos].g + cost;
+        double nextH = CalcHeuristic(x, y);
+
+        //update open linst
+        UpdateOpenList(x, y, nextG, nextH, prevX, prevY);
+    }
+}
+
+void AStarPathFinder::UpdateOpenList(int x, int y, double nextG, double nextH, int prevX, int prevY)
+{
+    //new f = g + h
+    double nextF = nextG + nextH;
 
     //if not in open list, add to open list
     //otherwise update in open list if new cost is better
-    void UpdateOpenList(int x, int y, double nextG, double nextH, int prevX, int prevY)
+    int pos = GetGridPos(x, y);
+    if (mpPosInfo[pos].f == FLT_MAX || mpPosInfo[pos].f > nextF)
     {
-        //new f = g + h
-        double nextF = nextG + nextH;
+        //insert into open list
+        openList.insert(make_pair(nextF, make_pair(x, y)));
 
-        //if not in open list, add to open list
-        //otherwise update in open list if new cost is better
-        int pos = GetGridPos(x, y);
-        if (mpPosInfo[pos].f == FLT_MAX || mpPosInfo[pos].f > nextF)
-        {
-            //insert into open list
-            openList.insert(make_pair(nextF, make_pair(x, y)));
-
-            //update info
-            mpPosInfo[pos].f = nextF;
-            mpPosInfo[pos].g = nextG;
-            mpPosInfo[pos].h = nextH;
-            mpPosInfo[pos].parentX = prevX;
-            mpPosInfo[pos].parentY = prevY;
-        }
+        //update info
+        mpPosInfo[pos].f = nextF;
+        mpPosInfo[pos].g = nextG;
+        mpPosInfo[pos].h = nextH;
+        mpPosInfo[pos].parentX = prevX;
+        mpPosInfo[pos].parentY = prevY;
     }
+}
 
-    //calculate 'h' heuristics.
-    double CalculateHValue(int row, int col)
+double AStarPathFinder::CalcHeuristic(int x, int y)
+{
+    //cost difference (distance) formula
+    int diffX = x - mDst.first;
+    int diffY = y - mDst.second;
+    return (double)sqrt(diffX * diffX + diffY * diffY);
+}
+
+void AStarPathFinder::TracePath()
+{
+    int x = mDst.first;
+    int y = mDst.second;
+    int pos = GetGridPos(x, y);
+
+    stack<Pair> Path;
+
+    while (!(mpPosInfo[pos].parentX == x && mpPosInfo[pos].parentY == y))
     {
-        //cost difference (distance) formula
-        return ((double)sqrt((row - mDst.first)*(row - mDst.first)
-            + (col - mDst.second)*(col - mDst.second)));
-    }
-
-    //whether position is in valid range
-    bool IsValid(int x, int y)
-    {
-        if (x < mGameInfo->playable_min.x)
-            return false;
-        if (x > mGameInfo->playable_max.x)
-            return false;
-        if (y < mGameInfo->playable_min.y)
-            return false;
-        if (y > mGameInfo->playable_max.y)
-            return false;
-        return true;
-    }
-
-    //offset inot grid array
-    int GetGridPos(int x, int y)
-    {
-        return x * mWidth + y;
-    }
-
-    //whether position is available for use (clear, not blocked)
-    bool IsClear(int x, int y)
-    {
-        int pos = GetGridPos(x, y);
-        if (mData[pos] == 0)
-            return true; //clear
-        return false; //obstacle
-    }
-
-    //whether position is the destination
-    bool IsDst(int row, int col)
-    {
-        if (row == mDst.first && col == mDst.second)
-            return true; //destination
-        return false; //not destination
-    }
-
-    //traces resulting path
-    void TracePath()
-    {
-        int x = mDst.first;
-        int y = mDst.second;
-        int pos = GetGridPos(x, y);
-
-        stack<Pair> Path;
-
-        while (!(mpPosInfo[pos].parentX == x && mpPosInfo[pos].parentY == y))
-        {
-            Path.push(make_pair(x, y));
-            int temp_x = mpPosInfo[pos].parentX;
-            int temp_y = mpPosInfo[pos].parentY;
-            x = temp_x;
-            y = temp_y;
-            pos = GetGridPos(x, y);
-        }
         Path.push(make_pair(x, y));
-
-        while (!Path.empty())
-        {
-            pair<int, int> p = Path.top();
-            Path.pop();
-            Point2DI pt(p.first, p.second);
-            mpPath->push_back(pt);
-        }
+        int temp_x = mpPosInfo[pos].parentX;
+        int temp_y = mpPosInfo[pos].parentY;
+        x = temp_x;
+        y = temp_y;
+        pos = GetGridPos(x, y);
     }
+    Path.push(make_pair(x, y));
 
-    //prints error
-    void PrintError(const char* msg);
-};
+    while (!Path.empty())
+    {
+        pair<int, int> p = Path.top();
+        Path.pop();
+        Point2DI pt(p.first, p.second);
+        mpPath->push_back(pt);
+    }
+}
 
 //prints error message
 void AStarPathFinder::PrintError(const char* msg)
@@ -480,18 +386,6 @@ void PrintBestPath(vector<Point2DI>& outPath)
         }
     }
     cout << endl;
-}
-
-
-void FindBestPathTest(const GameInfo& game_info, Point2DI& src, Point2DI& dst, vector<Point2DI>& outPath)
-{
-    cout << "Find Best Path Test" << endl;
-
-    //path finder
-    AStarPathFinder pathFinder;
-
-    //find path
-    pathFinder.FindPath(game_info, src, dst, outPath);
 }
 
 } //namespace sc2
