@@ -119,8 +119,11 @@ void DPS_PrintUnit(const char* msg, const sc2::Unit* unit)
 namespace sc2
 {
 
+#define DIST_DIAG 1.41421356237f    //min diagonal distance cost
+#define DIST_HZVT 1.0f              //min horz/vert distance cost
+
 AStarPathFinder::AStarPathFinder(const GameInfo& game_info, bool canMoveDiag)
-    : mGameInfo(game_info), mImd(game_info.pathing_grid), mCanMoveDiag(canMoveDiag)
+    : mGameInfo(game_info), mImd(game_info.pathing_grid), mCanMoveDiag(canMoveDiag), mError(NoError)
 {
     mWidth = mImd.width;
     mHeight = mImd.height;
@@ -134,45 +137,24 @@ AStarPathFinder::~AStarPathFinder()
     mpPosInfo = NULL;
 }
 
-
 bool AStarPathFinder::FindPath(Point2DI& src, Point2DI& dst, vector<Point2DI>& outPath)
 {
     //input
     mData = (unsigned char*)mImd.data.c_str();
-    mSrc = make_pair(src.x, src.y);
-    mDst = make_pair(dst.x, dst.y);
+    mSrc = src;
+    mDst = dst;
 
     //output
     mpPath = &outPath;
     mpPath->clear();
 
-    //src out of range
-    if (!IsValid(mSrc.first, mSrc.second))
-    {
-        PrintError("Path source is invalid");
-        return false;
-    }
-
-    //dst out of range
-    if (!IsValid(mDst.first, mDst.second))
-    {
-        PrintError("Path destination is invalid");
-        return false;
-    }
-
-    //src or dst not available
-    if (!IsClear(mSrc.first, mSrc.second) || !IsClear(mDst.first, mDst.second))
-    {
-        PrintError("Path source or destination not available");
-        return false;
-    }
-
-    //src and dst same
-    if (IsDst(mSrc.first, mSrc.second))
-    {
-        PrintError("Path source or destination are same");
-        return false;
-    }
+    //validate src and dst
+    if (!IsValid(mSrc.x, mSrc.y)) return SetError(NotPlayableSrc); //src not playable
+    if (!IsValid(mDst.x, mDst.y)) return SetError(NotPlayableDst); //dst not playable
+    if (!IsClear(mSrc.x, mSrc.y)) return SetError(NotPathableSrc); //src not pathable
+    if (!IsClear(mDst.x, mDst.y)) return SetError(NotPathableDst); //dst not pathable
+    if (IsDst(mSrc.x, mSrc.y)) return SetError(SameSrcAndDst); //same src and dst
+    SetError(NoError); //no error
 
     //reset position info array
     for (int i = 0; i < mSize; i++)
@@ -186,9 +168,7 @@ bool AStarPathFinder::FindPath(Point2DI& src, Point2DI& dst, vector<Point2DI>& o
     }
 
     //put src into open list, with f = g = h = 0
-    int x = mSrc.first;
-    int y = mSrc.second;
-    UpdateOpenList(x, y, 0.0, 0.0, x, y);
+    UpdateOpenList(mSrc.x, mSrc.y, 0.0, 0.0, mSrc.x, mSrc.y);
 
     //search path
     while (!openList.empty())
@@ -202,13 +182,13 @@ bool AStarPathFinder::FindPath(Point2DI& src, Point2DI& dst, vector<Point2DI>& o
     }
 
     //failed to find path
-    return false;
+    return SetError(NoPath);
 }
 
 bool AStarPathFinder::UpdatePath()
 {
     //get open position, remove it from open list
-    pPair p = *openList.begin();
+    openPos p = *openList.begin();
     openList.erase(openList.begin());
 
     //current position
@@ -276,7 +256,6 @@ bool AStarPathFinder::UpdateDirection(int x, int y, double cost, int prevX, int 
     return false; //not completed
 }
 
-
 bool AStarPathFinder::CompletePath(int x, int y, int prevX, int prevY)
 {
     //dst not reached
@@ -290,7 +269,6 @@ bool AStarPathFinder::CompletePath(int x, int y, int prevX, int prevY)
     TracePath();
     return true;
 }
-
 
 void AStarPathFinder::UpdatePos(int x, int y, double cost, int prevX, int prevY)
 {
@@ -333,44 +311,52 @@ void AStarPathFinder::UpdateOpenList(int x, int y, double nextG, double nextH, i
 double AStarPathFinder::CalcHeuristic(int x, int y)
 {
     //cost difference (distance) formula
-    int diffX = x - mDst.first;
-    int diffY = y - mDst.second;
+    int diffX = x - mDst.x;
+    int diffY = y - mDst.y;
     return (double)sqrt(diffX * diffX + diffY * diffY);
 }
 
 void AStarPathFinder::TracePath()
 {
-    int x = mDst.first;
-    int y = mDst.second;
-    int pos = GetGridPos(x, y);
+    stack<Point2DI> path;
 
-    stack<Pair> Path;
+    int x = mDst.x;
+    int y = mDst.y;
+    int pos = GetGridPos(x, y);
 
     while (!(mpPosInfo[pos].parentX == x && mpPosInfo[pos].parentY == y))
     {
-        Path.push(make_pair(x, y));
+        path.push(Point2DI(x, y));
         int temp_x = mpPosInfo[pos].parentX;
         int temp_y = mpPosInfo[pos].parentY;
         x = temp_x;
         y = temp_y;
         pos = GetGridPos(x, y);
     }
-    Path.push(make_pair(x, y));
+    path.push(Point2DI(x, y));
 
-    while (!Path.empty())
+    while (!path.empty())
     {
-        pair<int, int> p = Path.top();
-        Path.pop();
-        Point2DI pt(p.first, p.second);
+        Point2DI pt = path.top();
+        path.pop();
         mpPath->push_back(pt);
     }
 }
 
-//prints error message
-void AStarPathFinder::PrintError(const char* msg)
+//gets error string for specifed error
+const char* AStarPathFinder::GetErrorString(AStarPathError error)
 {
-    if (msg)
-        cout << msg << endl;
+    switch (error)
+    {
+    case NoError:        return "No Error";
+    case NoPath:         return "No Path Found";
+    case SameSrcAndDst:  return "Same Source and Destination";
+    case NotPlayableSrc: return "Source Not Playable";
+    case NotPlayableDst: return "Destination Not Playable";
+    case NotPathableSrc: return "Source Not Pathable";
+    case NotPathableDst: return "Destination Not Pathable";
+    }
+    return "Undefined Error";
 }
 
 //prints best path

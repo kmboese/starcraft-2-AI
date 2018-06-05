@@ -32,8 +32,10 @@ void PathingBot::OnGameStart() {
     //DPS_PrintObservation("OnGBeg", obs);
     AStarPathFinder pathFinder(game_info, true);
 
-    Point2DI src(30, 30);           //source
-    Point2DI dst(60, 60);           //destination
+    //Point2DI src(30, 30);           //source
+    //Point2DI dst(60, 60);           //destination
+    Point2DI src(82, 45);           //source
+    Point2DI dst(159, 86);           //destination
     std::vector<Point2DI> outPath;  //output path
 
     //find path
@@ -45,7 +47,8 @@ void PathingBot::OnGameStart() {
     else
     {
         //path not found, error printed to console now
-        std::cout << "Failed to find path" << std::endl;
+        AStarPathError error = pathFinder.GetError();
+        std::cout << AStarPathFinder::GetErrorString(error) << std::endl;
     }
 
     //======================================
