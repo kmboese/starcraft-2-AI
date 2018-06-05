@@ -34,23 +34,20 @@ void PathingBot::OnGameStart() {
     renderer::Initialize("Feature layers", 50, 50, 2 * kDrawSize, 2 * kDrawSize);
 #endif
 
-<<<<<<< HEAD
-//    //Select all marines
-//    marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
-//    roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));
+//      //Select all marines
+//      marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+//      roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));
 //
-//    //Get the initial group health
-//    group_health = GetGroupHealth(marines);
+//      //Get the initial group health
+//      group_health = GetGroupHealth(marines);
 //
-//    //Move all marines to the center of the map on startup
-//    for (const auto &marine : marines) {
-//        std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
-//    }
-//    //Pick a leader and flock units on initialization
-//    leader = SelectLeader(marines);
-//    Flock(this, marines, leader, playable_max);
-//
-//    //Get all marines' locations
+//       //Move all marines to the center of the map on startup
+//      for (const auto &marine : marines) {
+//            //std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
+//      }
+//      //Pick a leader and flock units on initialization
+//      leader = SelectLeader(marines);
+//      Flock(this, marines, leader, center);
 
 //DPS _BEG
 //======================================
@@ -77,22 +74,6 @@ void PathingBot::OnGameStart() {
 
 //======================================
 //DPS END
-=======
-    //Select all marines
-    marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
-    roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));
-
-    //Get the initial group health
-    group_health = GetGroupHealth(marines);
-
-    //Move all marines to the center of the map on startup
-    for (const auto &marine : marines) {
-        //std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
-    }
-    //Pick a leader and flock units on initialization
-    leader = SelectLeader(marines);
-    Flock(this, marines, leader, center);
->>>>>>> origin/flocking
 }
 
 void PathingBot::OnStep() {
@@ -185,7 +166,6 @@ void PathingBot::OnUnitIdle(const Unit* unit) {
     }
 }
 
-<<<<<<< HEAD
 //DPS _BEG
 //======================================
 ////! In non realtime games this function gets called after each step as indicated by step size.
@@ -278,7 +258,7 @@ void PathingBot::OnUnitIdle(const Unit* unit) {
 
 //======================================
 //DPS END
-=======
+
 void PathingBot::OnGameEnd() {
     //Update group health
     group_health = GetGroupHealth(marines);
@@ -289,7 +269,6 @@ void PathingBot::OnGameEnd() {
     renderer::Shutdown();
 #endif
 }
->>>>>>> origin/flocking
 
 const Unit* PathingBot::SelectLeader(const Units& units) {
     if (units.size() == 0) {
