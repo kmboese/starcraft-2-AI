@@ -38,7 +38,7 @@ void PathingBot::OnGameStart() {
 
     //Render on Linux
 #if defined(__linux__)
-    //renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
+//renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
     renderer::Initialize("Feature layers", 50, 50, 2 * kDrawSize, 2 * kDrawSize);
 #endif
 
@@ -61,7 +61,7 @@ void PathingBot::OnGameStart() {
     //path finder
     //DPS_PrintObservation("OnGBeg", obs);
 
-    
+
     //======================================
 
     //DPS END
@@ -86,7 +86,7 @@ void PathingBot::OnStep() {
         bool unit_was_centered = false; //indicates any marine moved to the center
         //Center the marines
         if (!centered) {
-            centered = MoveUnits(this, marines, center);
+            centered = MoveUnitsNear(this, marines, center, POINT_RADIUS);
         }
         //Next, Separate the marines
         else if (!separated) {
@@ -102,12 +102,13 @@ void PathingBot::OnStep() {
             }
         }
         //After separation, move units as a group
-        else if (!goal_reached)  {
+        else if (!goal_reached) {
             //If leader is near the next point, pop the next point from the path and move the leader to it
-            PathLeader(this, leader, outPath);
+            //PathLeader(this, leader, outPath);
+            PathAll(this, leader, marines, outPath);
             //Flock(this, marines, leader, goal);
             goal_reached = CheckGoalReached(leader, goal);
-        } 
+        }
         //End the game after the goal is reached
         else {
             Separate(this, marines);
@@ -116,7 +117,7 @@ void PathingBot::OnStep() {
         }
     }
     //Keep the marines regularly separated out, once centered
-    if ((game_loop % sep_freq == 0) && separated && (!goal_reached) ) {
+    if ((game_loop % sep_freq == 0) && separated && (!goal_reached)) {
         //std::cout << "\t\tSeparation loop entered!" << std::endl;
         //Flock(this, marines, leader, goal);
         //Separate(this, marines);
@@ -124,7 +125,7 @@ void PathingBot::OnStep() {
     }
     //Update info
     if (game_loop % update_freq == 0) {
-        float old_group_health = group_health; 
+        float old_group_health = group_health;
         group_health = GetGroupHealth(marines);
         group_damaged = (group_health != old_group_health);
     }
@@ -140,10 +141,10 @@ void PathingBot::OnStep() {
         }
     }
     //Linux options
-#if defined(__linux__)
+    #if defined(__linux__)
     //Render all layers
-    Render();
-#endif
+        Render();
+    #endif
 }
 
 void PathingBot::OnUnitDestroyed(const Unit* unit) {
@@ -163,14 +164,14 @@ void PathingBot::OnUnitDestroyed(const Unit* unit) {
 
 void PathingBot::OnUnitIdle(const Unit* unit) {
     switch (unit->unit_type.ToType()) {
-        case UNIT_TYPEID::TERRAN_MARINE: {
-            const GameInfo& game_info = Observation()->GetGameInfo();
-            //Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations.front());
-            break;
-        }
-        default: {
-            break;
-        }
+    case UNIT_TYPEID::TERRAN_MARINE: {
+        const GameInfo& game_info = Observation()->GetGameInfo();
+        //Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations.front());
+        break;
+    }
+    default: {
+        break;
+    }
     }
 }
 
@@ -219,17 +220,30 @@ size_t PathingBot::CountUnitType(UNIT_TYPEID unit_type) {
 }
 
 /* ***** Common Functions ****/
-bool MoveUnits(Agent *bot, const Units& units, Point2D point) {
+bool MoveUnitsNear(Agent *bot, const Units& units, Point2D point, float radius) {
+    if (units.size() == 0) {
+        return false;
+    }
     bool all_near = true; //indicates all units are within a radius of the given point
     for (const auto& unit : units) {
         //Move any units not near the center to the center
-        if (!IsNear(unit, point, POINT_RADIUS)) {
+        if (!IsNear(unit, point, radius)) {
             bot->Actions()->UnitCommand(unit, ABILITY_ID::MOVE, point);
             //Actions()->UnitCommand(marine, ABILITY_ID::ATTACK_ATTACK, playable_max);
             all_near = false;
         }
     }
     return all_near;
+}
+
+bool MoveUnits(Agent *bot, const Units& units, Point2D point) {
+    if (units.size() == 0) {
+        return false;
+    }
+    for (const auto& unit : units) {
+        bot->Actions()->UnitCommand(unit, ABILITY_ID::MOVE, point);
+    }
+    return true;
 }
 
 bool PathLeader(Agent *bot, const Unit* leader, std::vector<Point2DI>& path) {
@@ -250,6 +264,26 @@ bool PathLeader(Agent *bot, const Unit* leader, std::vector<Point2DI>& path) {
         next_point = ConvertToPoint2D(path.back());
         path.pop_back();
         bot->Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
+        return true;
+    }
+}
+
+bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Point2DI>& path) {
+    if (outPath.size() == 0) {
+        return false;
+    }
+    else if (!IsNear(leader, next_point, TILE_RADIUS)) {
+        float dist = Distance2D(leader->pos, next_point);
+        std::cout << "\tDEBUG: leader is " << dist << " away from the next point\n";
+        MoveUnits(bot, units, next_point);
+        return false;
+    }
+    else {
+        std::cout << "\tDEBUG: moving group to the next point...\n";
+        PrintPoint2D(next_point);
+        next_point = ConvertToPoint2D(path.back());
+        path.pop_back();
+        MoveUnits(bot, units, next_point);
         return true;
     }
 }

@@ -69,13 +69,22 @@ private:
 };
 
 /* ***** Movement functions ***** */
-//Moves all given units to the center of the map
-bool MoveUnits(Agent *bot, const Units& units, Point2D point);
+//Moves units until they are all a certain radius away from a point
+bool MoveUnitsNear(Agent *bot, const Units& units, Point2D point, float radius);
+
+//Issue a move command to all given units
+bool MoveUnits(Agent *bot, const Units* units, Point2D point);
 /*
  * Attempt to move the leader to the next point given by A*
  * Returns: true if the leader moved and we removed a point, false otherwise.
 */
 bool PathLeader(Agent* bot, const Unit* leader, std::vector<Point2DI>& path);
+
+/*
+* Attempt to move all units to the next point given by A*
+* Returns: true if the units moved and we removed a point, false otherwise.
+*/
+bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Point2DI>& path);
 
 /*
  * Initialize the A* path
