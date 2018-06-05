@@ -11,7 +11,11 @@
 //Radius marines must be away from their centroid
 #define CENTROID_RADIUS 2.0f
 //Radius within which the leader is considered to have reached the goal
-#define GOAL_RADIUS 15.0f
+#define GOAL_RADIUS 10.0f
+
+//Constants
+const int MAP_BOUNDS_BUFFER = 10; //buffer space around the playable map boundaries to avoid A* errors
+const float TILE_RADIUS = sqrt(2.1); //Distance from a tile we are considered near to 
 
 //linux rendering variables
 //#if defined(__linux__)
@@ -74,6 +78,8 @@ bool IsNear(const Unit* unit, Point2D p, float radius);
 bool CheckGoalReached(const Unit* leader, Point2D goal);
 //Returns a Point2D as its Point2DI equivalent, rounded down
 Point2DI ConvertToPoint2DI(Point2D& p);
+//Returns a Point2D as its Point2DI equivalent, rounded down
+Point2D ConvertToPoint2D(Point2DI& p);
 
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world);
 }

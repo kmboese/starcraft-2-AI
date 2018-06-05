@@ -15,6 +15,8 @@ Units marines; //group of marines in the simulation
 Units roaches; //group of enemy roaches
 Point2D goal; //Goal point for A*
 Point2DI int_goal; //Goal as an integer x,y location
+std::vector<Point2DI> outPath;  //A* shortest path point vector
+Point2D next_point; //Next point to which the leader will move
 
 //Bot Checkpoints
 bool centered = false; //indicates group of marines initially was centered on the map
@@ -29,9 +31,9 @@ void PathingBot::OnGameStart() {
     Point2D playable_max = game_info.playable_max;
     //intialize the goal at the beginning of the game (arbitrarily chosen)
     goal = playable_max;
+    goal.x -= MAP_BOUNDS_BUFFER;
+    goal.y -= MAP_BOUNDS_BUFFER;
     int_goal = ConvertToPoint2DI(goal);
-    
-    
 
     //Render on Linux
 #if defined(__linux__)
@@ -61,10 +63,9 @@ void PathingBot::OnGameStart() {
 
     Point2D leader_pos = leader->pos;
     Point2DI int_leader_pos = ConvertToPoint2DI(leader_pos);
-    Point2DI dst(60, 60);           //destination
     std::cout << "\tDEBUG: int_goal == " << "(" << int_goal.x << ", " << int_goal.y << ")\n";
     std::cout << "\tDEBUG: int_leader_pos == " << "(" << int_leader_pos.x << ", " << int_leader_pos.y << ")\n";
-    std::vector<Point2DI> outPath;  //output path
+
 
     //find path
     if (pathFinder.FindPath(int_leader_pos, int_goal, outPath))
@@ -77,7 +78,11 @@ void PathingBot::OnGameStart() {
         //path not found, error printed to console now
         std::cout << "Failed to find path" << std::endl;
     }
+    //Initialize the first point to move to
+    next_point = ConvertToPoint2D(outPath.front());
+    outPath.pop_back();
     //======================================
+
     //DPS END
 }
 
@@ -106,13 +111,24 @@ void PathingBot::OnStep() {
             separated = Separate(this, marines);
         }
         //After separation, move units as a group
-        else if (!goal_reached) {
-            Flock(this, marines, leader, goal);
+        else if (!goal_reached)  {
+            //If leader is near the next point, pop the next point from the path and move the leader to it
+            if (IsNear(leader, next_point, TILE_RADIUS)) {
+                next_point = ConvertToPoint2D(outPath.front());
+                outPath.pop_back();
+                Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
+            }
+            else {
+                Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
+                std::cout << "Position of leader == " << "(" << leader->pos.x << " ," << leader->pos.y << ")\n";
+            }
+            //Flock(this, marines, leader, goal);
             goal_reached = CheckGoalReached(leader, goal);
-        }
+        } 
         //End the game after the goal is reached
         else {
             Separate(this, marines);
+            std::cout << "Position of leader == " << "(" << leader->pos.x << " ," << leader->pos.y << ")\n";
         }
     }
     //Keep the marines regularly separated out, once centered
@@ -265,6 +281,10 @@ bool CheckGoalReached(const Unit* leader, Point2D goal) {
 
 Point2DI ConvertToPoint2DI(Point2D& p) {
     return (Point2DI{ int(p.x), int(p.y) });
+}
+
+Point2D ConvertToPoint2D(Point2DI& p) {
+    return (Point2D{ float(p.x), float(p.y) });
 }
 
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) {
