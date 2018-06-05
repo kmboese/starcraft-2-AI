@@ -5,18 +5,21 @@
 #include "sc2renderer/sc2_renderer.h"
 
 #define LINUX_USE_SOFTWARE_RENDER 0
-//Radius within which units are considered near each other
-#define UNIT_RADIUS 1.0f
-//Radius within which units are considered near a point
-#define POINT_RADIUS 3.0f
-//Radius marines must be away from their centroid
-#define CENTROID_RADIUS 2.0f
-//Radius within which the leader is considered to have reached the goal
-#define GOAL_RADIUS 10.0f
+
 
 //Constants
 const int MAP_BOUNDS_BUFFER = 10; //buffer space around the playable map boundaries to avoid A* errors
-const float TILE_RADIUS = 2.0f; //Distance from a tile we are considered near to 
+//Radius within which units are considered near each other
+const float UNIT_RADIUS = 2.0f;
+//Radius within which units are considered near a point
+const float POINT_RADIUS = 3.0f;
+//Radius marines must be away from each other
+const float SEPARATION_RADIUS = 0.5f;
+//Radius marines must be away from their centroid
+const float CENTROID_RADIUS = 2.0f;
+//Radius within which the leader is considered to have reached the goal
+const float GOAL_RADIUS = 10.0f;
+const float TILE_RADIUS = float(sqrt(2)); //Distance from a tile we are considered near to 
 
 //linux rendering variables
 //#if defined(__linux__)
