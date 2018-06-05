@@ -275,6 +275,7 @@ bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Poi
     else if (!IsNear(leader, next_point, TILE_RADIUS)) {
         float dist = Distance2D(leader->pos, next_point);
         std::cout << "\tDEBUG: leader is " << dist << " away from the next point\n";
+        PrintPoint2D(next_point);
         MoveUnits(bot, units, next_point);
         return false;
     }
@@ -290,12 +291,12 @@ bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Poi
 
 bool InitPath(AStarPathFinder& pathfinder, Point2DI& start, Point2DI& goal, std::vector<Point2DI>& path) {
     if (pathfinder.FindPath(start, goal, path)) {
-        //print output path 
-        PrintBestPath(outPath);
         //Reverse the vector for use in pathing units
         std::reverse(path.begin(), path.end());
+        //print output path 
+        PrintBestPath(outPath);
         //Initialize the first point to move to
-        next_point = ConvertToPoint2D(outPath.front());
+        next_point = ConvertToPoint2D(outPath.back());
         return true;
     }
     else {
