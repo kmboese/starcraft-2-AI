@@ -30,7 +30,8 @@ void PathingBot::OnGameStart() {
     Point2D center = GetMapCenter();
     Point2D playable_max = game_info.playable_max;
     //intialize the goal at the beginning of the game (arbitrarily chosen)
-    int_goal = ConvertToPoint2DI(playable_max);
+    goal = playable_max;
+    int_goal = ConvertToPoint2DI(goal);
     
 
     //Render on Linux
@@ -58,8 +59,8 @@ void PathingBot::OnStep() {
     const GameInfo& game_info = obs->GetGameInfo();
     uint32_t game_loop = obs->GetGameLoop();
     uint32_t pathing_freq = 10; //How often we run our algorithm
-    uint32_t info_freq = 30; //How often we print game info
-    uint32_t update_freq = 30; //How often we update game info
+    uint32_t info_freq = 10; //How often we print game info
+    uint32_t update_freq = 10; //How often we update game info
     uint32_t sep_freq = pathing_freq / 1; //how often we spread out the marines
     Point2D center = GetMapCenter();
 
@@ -96,7 +97,9 @@ void PathingBot::OnStep() {
     }
     //Update info
     if (game_loop % update_freq == 0) {
+        float old_group_health = group_health; 
         group_health = GetGroupHealth(marines);
+        group_damaged = (group_health != old_group_health);
     }
     //Print Info
     if (game_loop % info_freq == 0) {
@@ -105,7 +108,9 @@ void PathingBot::OnStep() {
         std::cout << "Centroid location: (" << GetCentroid(marines).x << "," << GetCentroid(marines).y
             << ")\n";
         */
-        std::cout << "Group health: " << group_health << "\n";
+        if (group_damaged) {
+            std::cout << "Group health: " << group_health << "\n";
+        }
     }
     //Linux options
 #if defined(__linux__)
@@ -122,7 +127,7 @@ void PathingBot::OnUnitDestroyed(const Unit* unit) {
         std::cout << "\t***** Event: new leader chosen! *****" << std::endl;
         leader = SelectLeader(marines);
         Flock(this, marines, leader, goal);
-        Separate(this, marines);
+        //Separate(this, marines);
     }
     else {
         //std::cout << "\tEvent: non-leader marine died" << std::endl;

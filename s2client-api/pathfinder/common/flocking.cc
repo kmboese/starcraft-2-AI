@@ -20,8 +20,12 @@ bool Flock(Agent *bot, const Units& units, const Unit* leader, Point2D &move_poi
     for (auto &unit : units) {
         if (unit != leader) {
             //Scale the movement vector to get better separation
-            float mult = 2.0f*Distance2D(unit->pos, move_point);
+            //NOTE: still messing with the multiplier
+            float mult = 1.0f;
+            //float mult = 1.0f*Distance2D(unit->pos, move_point);
             Point2D adjustment = GetNeighborsDistance(unit, units);
+            //std::cout << "\tDEBUG: distance from unit to others is " << sqrt(std::pow(adjustment.x,2) + std::pow(adjustment.y, 2)) << "\n";
+            //float mult = 1 / (sqrt(std::pow(adjustment.x, 2) + std::pow(adjustment.y, 2)));
             move_point.x += mult*adjustment.x;
             move_point.y += mult*adjustment.y;
             bot->Actions()->UnitCommand(unit, ABILITY_ID::MOVE, move_point);
