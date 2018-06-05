@@ -166,6 +166,17 @@ void PathingBot::OnUnitIdle(const Unit* unit) {
     }
 }
 
+void PathingBot::OnGameEnd() {
+    //Update group health
+    group_health = GetGroupHealth(marines);
+    std::cout << "**** Game end info: *****\n";
+    std::cout << "Group health: " << group_health << "\n";
+
+#if defined(__linux__)
+    renderer::Shutdown();
+#endif
+}
+
 //DPS _BEG
 //======================================
 ////! In non realtime games this function gets called after each step as indicated by step size.
@@ -258,17 +269,6 @@ void PathingBot::OnUnitIdle(const Unit* unit) {
 
 //======================================
 //DPS END
-
-void PathingBot::OnGameEnd() {
-    //Update group health
-    group_health = GetGroupHealth(marines);
-    std::cout << "**** Game end info: *****\n";
-    std::cout << "Group health: " << group_health << "\n";
-
-#if defined(__linux__)
-    renderer::Shutdown();
-#endif
-}
 
 const Unit* PathingBot::SelectLeader(const Units& units) {
     if (units.size() == 0) {
