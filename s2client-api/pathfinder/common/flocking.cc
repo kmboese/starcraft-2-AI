@@ -118,7 +118,7 @@ Point2D GetNeighborsDistance(const Unit* unit, const Units& neighbors) {
             diff.y += unit->pos.y - neighbor->pos.y;
         }
     }
-    diff /= float(neighbors.size() - 1);
+    diff /= float(neighbors.size());
     return diff;
 }
 
