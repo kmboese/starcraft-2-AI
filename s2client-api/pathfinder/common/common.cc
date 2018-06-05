@@ -21,8 +21,6 @@ bool centered = false; //indicates group of marines initially was centered on th
 bool separated = false; //indicates the group has been separated out
 bool goal_reached = false; //indicates the group of units has reached its goal.
 
-
-
 void PathingBot::OnGameStart() {
     const ObservationInterface* obs = Observation();
     const GameInfo& game_info = obs->GetGameInfo();
@@ -32,6 +30,7 @@ void PathingBot::OnGameStart() {
     //intialize the goal at the beginning of the game (arbitrarily chosen)
     goal = playable_max;
     int_goal = ConvertToPoint2DI(goal);
+    
     
 
     //Render on Linux
@@ -52,6 +51,34 @@ void PathingBot::OnGameStart() {
     //Pick a leader and flock units on initialization
     leader = SelectLeader(marines);
     Flock(this, marines, leader, center);
+
+    //Initialize path finding
+    //DPS _BEG
+    //======================================
+    //path finder
+    //DPS_PrintObservation("OnGBeg", obs);
+    AStarPathFinder pathFinder(game_info, true);
+
+    Point2D leader_pos = leader->pos;
+    Point2DI int_leader_pos = ConvertToPoint2DI(leader_pos);
+    Point2DI dst(60, 60);           //destination
+    std::cout << "\tDEBUG: int_goal == " << "(" << int_goal.x << ", " << int_goal.y << ")\n";
+    std::cout << "\tDEBUG: int_leader_pos == " << "(" << int_leader_pos.x << ", " << int_leader_pos.y << ")\n";
+    std::vector<Point2DI> outPath;  //output path
+
+    //find path
+    if (pathFinder.FindPath(int_leader_pos, int_goal, outPath))
+    {
+        //print output path 
+        PrintBestPath(outPath);
+    }
+    else
+    {
+        //path not found, error printed to console now
+        std::cout << "Failed to find path" << std::endl;
+    }
+    //======================================
+    //DPS END
 }
 
 void PathingBot::OnStep() {
