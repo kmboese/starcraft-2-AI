@@ -22,6 +22,21 @@ void DPS_PrintImageDataValues(const sc2::ImageData& imd)
         return;
     }
     cout << setfill('0') << uppercase;
+    cout << dec << "----" << ": ";
+    for (int col = 0; col < imd.width; col++)
+    {
+        int ix = col / 100;
+        cout << setw(2) << ix << ".";
+    }
+    cout << endl;
+    cout << "----" << ": ";
+    for (int col = 0; col < imd.width; col++)
+    {
+        int ix = col % 100;
+        cout << setw(2) << ix << ".";
+    }
+    cout << endl;
+
     for (int row = 0; row < imd.height; row++)
     {
         cout << dec << setw(4) << row << ": " << hex;
