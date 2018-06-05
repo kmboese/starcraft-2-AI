@@ -1,6 +1,5 @@
 #include "common.h"
 #include "flocking.h"
-#include "astar.h"
 #include <iostream>
 #include <stdlib.h>
 
@@ -21,6 +20,7 @@ Point2D next_point; //Next point to which the leader will move
 //Bot Checkpoints
 bool centered = false; //indicates group of marines initially was centered on the map
 bool separated = false; //indicates the group has been separated out
+bool path_initialized = false; //indicates the initial A* path has been created
 bool goal_reached = false; //indicates the group of units has reached its goal.
 
 void PathingBot::OnGameStart() {
@@ -59,28 +59,8 @@ void PathingBot::OnGameStart() {
     //======================================
     //path finder
     //DPS_PrintObservation("OnGBeg", obs);
-    AStarPathFinder pathFinder(game_info, true);
 
-    Point2D leader_pos = leader->pos;
-    Point2DI int_leader_pos = ConvertToPoint2DI(leader_pos);
-    std::cout << "\tDEBUG: int_goal == " << "(" << int_goal.x << ", " << int_goal.y << ")\n";
-    std::cout << "\tDEBUG: int_leader_pos == " << "(" << int_leader_pos.x << ", " << int_leader_pos.y << ")\n";
-
-
-    //find path
-    if (pathFinder.FindPath(int_leader_pos, int_goal, outPath))
-    {
-        //print output path 
-        PrintBestPath(outPath);
-    }
-    else
-    {
-        //path not found, error printed to console now
-        std::cout << "Failed to find path" << std::endl;
-    }
-    //Initialize the first point to move to
-    next_point = ConvertToPoint2D(outPath.front());
-    outPath.pop_back();
+    
     //======================================
 
     //DPS END
@@ -95,6 +75,7 @@ void PathingBot::OnStep() {
     uint32_t update_freq = 10; //How often we update game info
     uint32_t sep_freq = pathing_freq / 1; //how often we spread out the marines
     Point2D center = GetMapCenter();
+    AStarPathFinder pathFinder(game_info, true); //pathFinder object for A* 
 
     //Update Info
     marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
@@ -110,18 +91,16 @@ void PathingBot::OnStep() {
         else if (!separated) {
             separated = Separate(this, marines);
         }
+        //Initialize the A* path
+        else if (!path_initialized) {
+            Point2D leader_pos = leader->pos;
+            Point2DI int_leader_pos = ConvertToPoint2DI(leader_pos);
+            path_initialized = InitPath(pathFinder, int_leader_pos, int_goal, outPath);
+        }
         //After separation, move units as a group
         else if (!goal_reached)  {
             //If leader is near the next point, pop the next point from the path and move the leader to it
-            if (IsNear(leader, next_point, TILE_RADIUS)) {
-                next_point = ConvertToPoint2D(outPath.front());
-                outPath.pop_back();
-                Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
-            }
-            else {
-                Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
-                std::cout << "Position of leader == " << "(" << leader->pos.x << " ," << leader->pos.y << ")\n";
-            }
+            PathLeader(this, leader, outPath);
             //Flock(this, marines, leader, goal);
             goal_reached = CheckGoalReached(leader, goal);
         } 
@@ -248,6 +227,41 @@ bool MoveUnits(Agent *bot, const Units& units, Point2D point) {
     return all_near;
 }
 
+bool PathLeader(Agent *bot, const Unit* leader, std::vector<Point2DI>& path) {
+    if (outPath.size() == 0) {
+        return false;
+    }
+    //If leader is not near the next path point, keep moving him towards it
+    else if (!IsNear(leader, next_point, TILE_RADIUS)) {
+        bot->Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
+        float dist = Distance2D(leader->pos, next_point);
+        std::cout << "\tDEBUG: leader is " << dist << " away from the next point\n";
+        return false;
+    }
+    //Otherwise, save and remove the next path location from the path and move the leader to it
+    else {
+        next_point = ConvertToPoint2D(path.front());
+        path.pop_back();
+        bot->Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
+        return true;
+    }
+}
+
+bool InitPath(AStarPathFinder& pathfinder, Point2DI& start, Point2DI& goal, std::vector<Point2DI>& path) {
+    if (pathfinder.FindPath(start, goal, path)) {
+        //print output path 
+        PrintBestPath(outPath);
+        //Initialize the first point to move to
+        next_point = ConvertToPoint2D(outPath.front());
+        return true;
+    }
+    else {
+        //path not found, error printed to console now
+        std::cout << "Failed to find path" << std::endl;
+        return false;
+    }
+}
+
 Point2D GetCentroid(const Units& units) {
     Point2D centroid{0.0, 0.0};
     if (units.size() == 0) {
@@ -285,6 +299,10 @@ Point2DI ConvertToPoint2DI(Point2D& p) {
 
 Point2D ConvertToPoint2D(Point2DI& p) {
     return (Point2D{ float(p.x), float(p.y) });
+}
+
+void PrintPoint2D(Point2D& p) {
+    std::cout << "point: (" << p.x << ", " << p.y << ")\n";
 }
 
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) {

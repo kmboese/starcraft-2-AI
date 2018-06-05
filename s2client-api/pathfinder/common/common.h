@@ -1,4 +1,5 @@
 #include "sc2api/sc2_api.h"
+#include "astar.h"
 #include <iostream>
 
 #include "sc2renderer/sc2_renderer.h"
@@ -15,7 +16,7 @@
 
 //Constants
 const int MAP_BOUNDS_BUFFER = 10; //buffer space around the playable map boundaries to avoid A* errors
-const float TILE_RADIUS = sqrt(2.1); //Distance from a tile we are considered near to 
+const float TILE_RADIUS = 2.0f; //Distance from a tile we are considered near to 
 
 //linux rendering variables
 //#if defined(__linux__)
@@ -67,9 +68,21 @@ private:
 
 };
 
-//Movement functions
+/* ***** Movement functions ***** */
 //Moves all given units to the center of the map
 bool MoveUnits(Agent *bot, const Units& units, Point2D point);
+/*
+ * Attempt to move the leader to the next point given by A*
+ * Returns: true if the leader moved and we removed a point, false otherwise.
+*/
+bool PathLeader(Agent* bot, const Unit* leader, std::vector<Point2DI>& path);
+
+/*
+ * Initialize the A* path
+ * Returns: true if the path was successfully initialized, false otherwise
+*/
+bool InitPath(AStarPathFinder& pathfinder, Point2DI& start, Point2DI& goal, std::vector<Point2DI>& path);
+
 //Returns the center point of a group of units
 Point2D GetCentroid(const Units& units);
 //Returns true if a unit is within a certain distance from a point
@@ -80,6 +93,8 @@ bool CheckGoalReached(const Unit* leader, Point2D goal);
 Point2DI ConvertToPoint2DI(Point2D& p);
 //Returns a Point2D as its Point2DI equivalent, rounded down
 Point2D ConvertToPoint2D(Point2DI& p);
+//Prints the x,y coordinates of a point with formatting
+void PrintPoint2D(Point2D& p);
 
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world);
 }
