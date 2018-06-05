@@ -119,8 +119,8 @@ void DPS_PrintUnit(const char* msg, const sc2::Unit* unit)
 namespace sc2
 {
 
-AStarPathFinder::AStarPathFinder(const GameInfo& game_info)
-    : mGameInfo(game_info), mImd(game_info.pathing_grid)
+AStarPathFinder::AStarPathFinder(const GameInfo& game_info, bool canMoveDiag)
+    : mGameInfo(game_info), mImd(game_info.pathing_grid), mCanMoveDiag(canMoveDiag)
 {
     mWidth = mImd.width;
     mHeight = mImd.height;
@@ -237,21 +237,25 @@ bool AStarPathFinder::UpdatePath()
     if (UpdateDirection(x, y - 1, DIST_HZVT, x, y))
         return true;
 
-    //update north-east direction
-    if (UpdateDirection(x - 1, y + 1, DIST_DIAG, x, y))
-        return true;
+    //if diag move allowed
+    if (mCanMoveDiag)
+    {
+        //update north-east direction
+        if (UpdateDirection(x - 1, y + 1, DIST_DIAG, x, y))
+            return true;
 
-    //update north-west direction
-    if (UpdateDirection(x - 1, y - 1, DIST_DIAG, x, y))
-        return true;
+        //update north-west direction
+        if (UpdateDirection(x - 1, y - 1, DIST_DIAG, x, y))
+            return true;
 
-    //update south-east direction
-    if (UpdateDirection(x + 1, y + 1, DIST_DIAG, x, y))
-        return true;
+        //update south-east direction
+        if (UpdateDirection(x + 1, y + 1, DIST_DIAG, x, y))
+            return true;
 
-    //update south-west direction
-    if (UpdateDirection(x + 1, y - 1, DIST_DIAG, x, y))
-        return true;
+        //update south-west direction
+        if (UpdateDirection(x + 1, y - 1, DIST_DIAG, x, y))
+            return true;
+    }
 
     //not complete
     return false;

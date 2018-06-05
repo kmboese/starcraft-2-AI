@@ -33,11 +33,15 @@ class AStarPathFinder
 {
 public:
 
-    AStarPathFinder(const GameInfo& game_info);
+    AStarPathFinder(const GameInfo& game_info, bool canMoveDiag);
     virtual ~AStarPathFinder();
 
     //find path via A-star search algorithm
     bool FindPath(Point2DI& src, Point2DI& dst, std::vector<Point2DI>& outPath);
+
+    //option to allow for diag moves
+    bool GetCanMoveDiag() const {return mCanMoveDiag;}
+    void SetCanMoveDiag(bool canMoveDiag) {mCanMoveDiag = canMoveDiag;}
 
 protected:
 
@@ -97,6 +101,7 @@ protected:
 
 protected:
 
+    bool mCanMoveDiag;
     const GameInfo& mGameInfo;     //game info
     const sc2::ImageData& mImd;    //map image data;
     unsigned char* mData;          //grid

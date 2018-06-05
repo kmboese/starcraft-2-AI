@@ -24,37 +24,13 @@ namespace sc2 {
 void PathingBot::OnGameStart() {
     const ObservationInterface* obs = Observation();
     const GameInfo& game_info = obs->GetGameInfo();
-    uint32_t gameLoop = obs->GetGameLoop();
-    Point2D center = GetMapCenter();
-    Point2D playable_max = game_info.playable_max;
 
-    //Render on Linux
-#if defined(__linux__)
-    //renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
-    renderer::Initialize("Feature layers", 50, 50, 2 * kDrawSize, 2 * kDrawSize);
-#endif
-
-//      //Select all marines
-//      marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
-//      roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));
-//
-//      //Get the initial group health
-//      group_health = GetGroupHealth(marines);
-//
-//       //Move all marines to the center of the map on startup
-//      for (const auto &marine : marines) {
-//            //std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
-//      }
-//      //Pick a leader and flock units on initialization
-//      leader = SelectLeader(marines);
-//      Flock(this, marines, leader, center);
-
-//DPS _BEG
-//======================================
+    //DPS _BEG
+    //======================================
 
     //path finder
     //DPS_PrintObservation("OnGBeg", obs);
-    AStarPathFinder pathFinder(game_info);
+    AStarPathFinder pathFinder(game_info, true);
 
     Point2DI src(30, 30);           //source
     Point2DI dst(60, 60);           //destination
@@ -72,8 +48,33 @@ void PathingBot::OnGameStart() {
         std::cout << "Failed to find path" << std::endl;
     }
 
-//======================================
-//DPS END
+    //======================================
+    //DPS END
+
+    uint32_t gameLoop = obs->GetGameLoop();
+    Point2D center = GetMapCenter();
+    Point2D playable_max = game_info.playable_max;
+
+    //Render on Linux
+#if defined(__linux__)
+    //renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
+    renderer::Initialize("Feature layers", 50, 50, 2 * kDrawSize, 2 * kDrawSize);
+#endif
+
+      //Select all marines
+      marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+      roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));
+
+      //Get the initial group health
+      group_health = GetGroupHealth(marines);
+
+       //Move all marines to the center of the map on startup
+      for (const auto &marine : marines) {
+            //std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
+      }
+      //Pick a leader and flock units on initialization
+      leader = SelectLeader(marines);
+      Flock(this, marines, leader, center);
 }
 
 void PathingBot::OnStep() {
