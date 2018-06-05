@@ -2,6 +2,7 @@
 #include "flocking.h"
 #include <iostream>
 #include <stdlib.h>
+#include <algorithm>
 
 #include "sc2renderer/sc2_renderer.h"
 
@@ -96,6 +97,9 @@ void PathingBot::OnStep() {
             Point2D leader_pos = leader->pos;
             Point2DI int_leader_pos = ConvertToPoint2DI(leader_pos);
             path_initialized = InitPath(pathFinder, int_leader_pos, int_goal, outPath);
+            if (path_initialized) {
+                std::cout << "\tDEBUG: path initialized!\n";
+            }
         }
         //After separation, move units as a group
         else if (!goal_reached)  {
@@ -107,7 +111,8 @@ void PathingBot::OnStep() {
         //End the game after the goal is reached
         else {
             Separate(this, marines);
-            std::cout << "Position of leader == " << "(" << leader->pos.x << " ," << leader->pos.y << ")\n";
+            std::cout << "Position of leader:\n";
+            PrintPoint2D(leader->pos);
         }
     }
     //Keep the marines regularly separated out, once centered
@@ -240,7 +245,9 @@ bool PathLeader(Agent *bot, const Unit* leader, std::vector<Point2DI>& path) {
     }
     //Otherwise, save and remove the next path location from the path and move the leader to it
     else {
-        next_point = ConvertToPoint2D(path.front());
+        std::cout << "\tDEBUG: leader is moving to next point...\n";
+        PrintPoint2D(next_point);
+        next_point = ConvertToPoint2D(path.back());
         path.pop_back();
         bot->Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
         return true;
@@ -251,6 +258,8 @@ bool InitPath(AStarPathFinder& pathfinder, Point2DI& start, Point2DI& goal, std:
     if (pathfinder.FindPath(start, goal, path)) {
         //print output path 
         PrintBestPath(outPath);
+        //Reverse the vector for use in pathing units
+        std::reverse(path.begin(), path.end());
         //Initialize the first point to move to
         next_point = ConvertToPoint2D(outPath.front());
         return true;
@@ -301,7 +310,7 @@ Point2D ConvertToPoint2D(Point2DI& p) {
     return (Point2D{ float(p.x), float(p.y) });
 }
 
-void PrintPoint2D(Point2D& p) {
+void PrintPoint2D(const Point2D& p) {
     std::cout << "point: (" << p.x << ", " << p.y << ")\n";
 }
 
