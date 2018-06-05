@@ -72,6 +72,8 @@ Point2D GetCentroid(const Units& units);
 bool IsNear(const Unit* unit, Point2D p, float radius);
 //Returns true if the leader of the group is near the goal point
 bool CheckGoalReached(const Unit* leader, Point2D goal);
+//Returns a Point2D as its Point2DI equivalent, rounded down
+Point2DI ConvertToPoint2DI(Point2D& p);
 
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world);
 }

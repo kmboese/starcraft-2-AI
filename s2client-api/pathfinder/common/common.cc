@@ -1,31 +1,37 @@
 #include "common.h"
 #include "flocking.h"
+#include "astar.h"
 #include <iostream>
 #include <stdlib.h>
 
 #include "sc2renderer/sc2_renderer.h"
 
-const sc2::Unit *leader; //global group leader
+namespace sc2 {
+
+const Unit* leader; //global group leader
 float group_health = 0.0; //group health
-sc2::Units marines; //group of marines in the simulation
-sc2::Units roaches; //group of enemy roaches
-sc2::Point2D goal; //Goal point for A*
+bool group_damaged = false; //indicates where the group took damage during the step
+Units marines; //group of marines in the simulation
+Units roaches; //group of enemy roaches
+Point2D goal; //Goal point for A*
+Point2DI int_goal; //Goal as an integer x,y location
 
 //Bot Checkpoints
 bool centered = false; //indicates group of marines initially was centered on the map
 bool separated = false; //indicates the group has been separated out
 bool goal_reached = false; //indicates the group of units has reached its goal.
 
-//Original
-//using namespace sc2;
-namespace sc2 {
+
 
 void PathingBot::OnGameStart() {
     const ObservationInterface* obs = Observation();
     const GameInfo& game_info = obs->GetGameInfo();
-    uint32_t gameLoop = obs->GetGameLoop();
+    uint32_t gameLoop = obs->GetGameLoop(); //keep track of the game loop for update frequencies
     Point2D center = GetMapCenter();
     Point2D playable_max = game_info.playable_max;
+    //intialize the goal at the beginning of the game (arbitrarily chosen)
+    int_goal = ConvertToPoint2DI(playable_max);
+    
 
     //Render on Linux
 #if defined(__linux__)
@@ -36,10 +42,8 @@ void PathingBot::OnGameStart() {
     //Select all marines
     marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
     roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));
-
     //Get the initial group health
     group_health = GetGroupHealth(marines);
-
     //Move all marines to the center of the map on startup
     for (const auto &marine : marines) {
         //std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
@@ -57,7 +61,6 @@ void PathingBot::OnStep() {
     uint32_t info_freq = 30; //How often we print game info
     uint32_t update_freq = 30; //How often we update game info
     uint32_t sep_freq = pathing_freq / 1; //how often we spread out the marines
-    goal = game_info.playable_max; //maximum playable Point on the map
     Point2D center = GetMapCenter();
 
     //Update Info
@@ -226,6 +229,10 @@ bool CheckGoalReached(const Unit* leader, Point2D goal) {
     }
     //std::cout << "\tDEBUG: leader is " << Distance2D(leader->pos, goal) << " from the goal\n";
     return(IsNear(leader, goal, GOAL_RADIUS));
+}
+
+Point2DI ConvertToPoint2DI(Point2D& p) {
+    return (Point2DI{ int(p.x), int(p.y) });
 }
 
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) {
