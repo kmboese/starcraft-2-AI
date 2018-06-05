@@ -51,9 +51,14 @@ void TEST_CREATE_SOURCE(InfluenceMap map) {
     assert(map.getNumSources() == numSources);
     
     std::cout << "Num sources: " << map.getNumSources() << std::endl;
+
+    float decay = 0;
+    map.propagate(decay);
+    map.printMap();
 }
 
 void TEST_PROPAGATE(InfluenceMap map) {
+    // Create 2 sources
     Point pt1;
     pt1.x = 5;
     pt1.y = 4;
@@ -64,7 +69,7 @@ void TEST_PROPAGATE(InfluenceMap map) {
     pt2.y = 4;
     map.createSource(pt2, 0.2);
 
-    // Test propagate
+    // Test propagate for one cycle
     float decay = 0.5;
     map.propagate(decay);
     map.printMap();

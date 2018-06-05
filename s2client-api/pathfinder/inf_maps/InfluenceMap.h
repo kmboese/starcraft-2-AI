@@ -71,6 +71,11 @@ public:
     unsigned int getNumSources();
 
     /**
+     * @getInfMap: Returns the influence map
+     */ 
+    std::vector<std::vector <float>> getInfMap();
+
+    /**
      *  @calcOverlap: A source's influence can overlap with another source's 
      *      influence. When this happens, add these values.
      */ 

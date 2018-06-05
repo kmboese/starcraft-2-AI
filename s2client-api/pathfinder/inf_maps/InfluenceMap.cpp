@@ -36,21 +36,28 @@ void InfluenceMap::initMap() {
 
 void InfluenceMap::createSource(Point pt, float rad) {
 
-    InfluenceSource source(pt, rad);
+    InfluenceSource src(pt, rad);
 
-    int range = round(rad);
-    int minX = pt.x - range;
-    int maxX = pt.x + range;
-    int minY = pt.y - range;
-    int maxY = pt.y + range;
+    int roundedRadius = round(src.radius);
 
-    for (int i = minX; i < maxX; ++i) {
-        for (int j = maxY; j > minY; --j) {
-            infMap[i][j] = 0;
+    int minX = floor(src.pt.x - src.radius);
+    int minY = floor(src.pt.y - src.radius);
+    int maxX = round(src.pt.x + src.radius);
+    int maxY = round(src.pt.y + src.radius);
+
+    for (int i = minX; i <= maxX; ++i) {
+        for (int j = maxY; j >= minY; --j) {
+            // If distance from point to center is leq the radius of the circle,
+            //  initialize the circle
+            if ((pow(src.pt.x - i, 2) + pow(src.pt.y - j, 2)) 
+                <= pow(roundedRadius, 2)) 
+            {
+                infMap[i][j] = 0;
+            }     
         }
-    }
+    }  
 
-    sources.push_back(source);
+    sources.push_back(src);
 } // end createSource()
 
 unsigned int InfluenceMap::getNumRows() {
@@ -63,6 +70,10 @@ unsigned int InfluenceMap::getNumCols() {
 
 unsigned int InfluenceMap::getNumSources() {
     return sources.size();
+}
+
+std::vector<std::vector <float>> InfluenceMap::getInfMap() {
+    return infMap;
 }
 
 
