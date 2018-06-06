@@ -12,9 +12,9 @@ const int MAP_BOUNDS_BUFFER = 10; //buffer space around the playable map boundar
 //Radius within which units are considered near each other
 const float UNIT_RADIUS = 1.0f;
 //Radius within which units are considered near a point
-const float POINT_RADIUS = 3.0f;
+const float POINT_RADIUS = 2.0f;
 //Radius marines must be away from each other
-const float SEPARATION_RADIUS = 2.0f;
+const float SEPARATION_RADIUS = 1.0f;
 //Radius marines must be away from their centroid
 const float CENTROID_RADIUS = 2.0f;
 //Radius within which the leader is considered to have reached the goal
