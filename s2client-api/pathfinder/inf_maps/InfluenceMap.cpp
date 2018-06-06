@@ -45,8 +45,31 @@ void InfluenceMap::createSource(Point pt, float rad) {
     int maxX = round(src.pt.x + src.radius);
     int maxY = round(src.pt.y + src.radius);
 
+    if (minX > maxX || minY > maxY) {
+        std::cerr << "Invalid influence source in createSource\n" << std::endl;
+        exit(0);
+    }
+
     for (int i = minX; i <= maxX; ++i) {
-        for (int j = maxY; j >= minY; --j) {
+        // Radius out of bounds. Continue until hit first element in map.
+        if (i < 0) {
+            continue;
+        }
+        /* Radius out of bounds. Should exit since further calculations will not
+          be saved. */
+        if ((unsigned int)i >= infMap.size()) {
+            break;
+        }
+
+        for (int j = minY; j <= maxY; ++j) {
+            if (j < 0) {
+                continue;
+            }
+
+            if ((unsigned int)j >= infMap[i].size()) {
+                break;
+            }
+
             // If distance from point to center is leq the radius of the circle,
             //  initialize the circle
             if ((pow(src.pt.x - i, 2) + pow(src.pt.y - j, 2)) 
@@ -77,11 +100,6 @@ std::vector<std::vector <float>> InfluenceMap::getInfMap() {
 }
 
 
-void InfluenceMap::calcOverlap() {
-// TODO: calcOverlap and deleteOldInfMap
-} // end calcOverlap()
-
-
 float InfluenceMap::exponentialDecay(const InfluenceSource &source, 
     const Point cell, float decay)
 {
@@ -109,8 +127,30 @@ std::vector<Point> InfluenceMap::calcCells(const InfluenceSource &source) {
     int minY = source.pt.y - range;
     int maxY = source.pt.y + range;
 
-    for (int i = minX; i < maxX; ++i) {
-        for (int j = maxY; j > minY; --j) {
+    if (minX > maxX || minY > maxY) {
+        std::cerr << "Invalid influence source in calcCells\n" << std::endl;
+        exit(0);
+    }
+
+    for (int i = minX; i <= maxX; ++i) {
+        // Radius out of bounds. Continue until hit first element in map.
+        if (i < 0) {
+            continue;
+        }
+        /* Radius out of bounds. Should exit since further calculations will not
+          be saved. */
+        if ((unsigned int)i >= infMap.size()) {
+            break;
+        }
+
+        for (int j = minY; j <= maxY; ++j) {
+            if (j < 0) {
+                continue;
+            }
+
+            if ((unsigned int)j >= infMap[i].size()) {
+                break;
+            }
             // Contruct point without an actual constructor because of InfSource
             //  constructor conflicts
             Point cell;
@@ -121,7 +161,8 @@ std::vector<Point> InfluenceMap::calcCells(const InfluenceSource &source) {
         }
     }
 
-    return cells;
+    return cells;    // propagate map
+
 } // end calcCells
 
 void InfluenceMap::propagate(float decay) {
@@ -150,6 +191,14 @@ void InfluenceMap::propagate(float decay) {
         }
     }
 } // end propagate()
+
+void InfluenceMap::updateMap(float decay) {
+    // Clear influence map
+    initMap();
+
+    // Propagate map
+    propagate(decay);
+}
 
 void InfluenceMap::printMap() {
     std::vector< std::vector<float> >::const_iterator row;

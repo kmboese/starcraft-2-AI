@@ -76,12 +76,6 @@ public:
     std::vector<std::vector <float>> getInfMap();
 
     /**
-     *  @calcOverlap: A source's influence can overlap with another source's 
-     *      influence. When this happens, add these values.
-     */ 
-    void calcOverlap();
-
-    /**
      *  @exponentialDecay: Exponential decay function that returns influence
      *      based on a cell's distance from the source.
      * 
@@ -109,8 +103,11 @@ public:
     /**
      *  @updateMap: Updates the map. (Update the map based on some defined
      *      frequency.)
+     * 
+     *  @decay: How much influence values decay with distance. Should be the
+     *      same value used for propagate decay.
      */ 
-    void updateMap();
+    void updateMap(float decay);
 
     /** 
      *  @printMap: Prints entire 2D grid with delimiters. Used for debugging.
