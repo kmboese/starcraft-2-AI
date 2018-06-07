@@ -51,11 +51,7 @@ void InfluenceMap::initMap() {
 } // end initMap()
 
 
-void InfluenceMap::createSource(int x, int y, float rad) {
-    Point pt;
-    pt.x = x;
-    pt.y = y;
-
+void InfluenceMap::createSource(Point pt, float rad) {
     InfluenceSource src(pt, rad);
 
     // int roundedRadius = round(src.radius);
@@ -142,46 +138,48 @@ float InfluenceMap::exponentialDecay(const InfluenceSource &source,
 } // end exponentialDecay()
 
 
-std::vector<Point> InfluenceMap::calcCells(const InfluenceSource &source) {
+std::vector<Point> InfluenceMap::calcCells(const InfluenceSource &src) {
     // Cells within radius of source. For now it will just be a square
     //  around the source's center.
     std::vector<Point> cells;
 
-    int range = round(source.radius);
-    int minX = source.pt.x - range;
-    int maxX = source.pt.x + range;
-    int minY = source.pt.y - range;
-    int maxY = source.pt.y + range;
+    int minX = floor(src.pt.x - src.radius);
+    int maxX = floor(src.pt.x + src.radius);
+    int minY = round(src.pt.y - src.radius);
+    int maxY = round(src.pt.y + src.radius);
 
     if (minX > maxX || minY > maxY) {
         std::cerr << "Invalid influence source in calcCells\n" << std::endl;
         exit(0);
     }
 
-    for (int i = minX; i <= maxX; ++i) {
-        // Radius out of bounds. Continue until hit first element in map.
-        if (i < 0) {
-            continue;
-        }
+    // Translate vector 2d grid into Cartesian plane.
+    for (int i = maxY; i >= minY; --i) { // rows: y
         /* Radius out of bounds. Should exit since further calculations will not
           be saved. */
-        if ((unsigned int)i >= infMap.size()) {
+        if (i < 0) {
             break;
         }
 
-        for (int j = minY; j <= maxY; ++j) {
+        // Radius out of bounds. Continue until hit first element in map.
+        if ((unsigned int)i >= infMap.size()) {
+            continue;
+        }
+
+        for (int j = minX; j <= maxX; ++j) { // cols: x
+            if (j >= 0 && (unsigned int)j >= infMap[i].size()) {
+                break;
+            }
+
             if (j < 0) {
                 continue;
             }
 
-            if ((unsigned int)j >= infMap[i].size()) {
-                break;
-            }
             // Contruct point without an actual constructor because of InfSource
             //  constructor conflicts
             Point cell;
-            cell.x = i;
-            cell.y = j;
+            cell.x = j;
+            cell.y = i;
 
             cells.push_back(cell);
         }
@@ -209,6 +207,7 @@ void InfluenceMap::propagate(float decay) {
             if (prevInf == 0) {
                 prevInf = 1;
             }
+            
             calculatedInf = prevInf * exponentialDecay(sources[i], 
                 cells[j], decay);
 

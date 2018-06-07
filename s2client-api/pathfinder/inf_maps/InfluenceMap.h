@@ -8,6 +8,12 @@ typedef struct Point
     int x;
     int y;
 
+    Point() {}
+
+    Point(int x, int y) {
+        this->x = x;
+        this->y = y;
+    }
 } Point;
 
 /** 
@@ -16,16 +22,18 @@ typedef struct Point
  * @pt: Position of source
  * @radius: Radius of source's influence.
  */ 
-typedef struct InfluenceSource {
+typedef struct InfluenceSource
+{
     Point pt;
     float radius;
+
+    InfluenceSource() {}
 
     InfluenceSource(Point pt, float rad) {
         this->pt.x = pt.x;
         this->pt.y = pt.y;
         radius = rad;
     }
-
 } InfluenceSource;
 
 class InfluenceMap {
@@ -53,7 +61,7 @@ public:
      * 
      *  Stores sources in private vector of sources.
      */ 
-    void createSource(int x, int y, float rad);
+    void createSource(Point pt, float rad);
 
     /**
      *  @getNumRows: Return the number of rows in influence map.
@@ -90,7 +98,7 @@ public:
      *  @calcCells: Returns a vector of cells from the influence map that the
      *      source has range over based on its radius.
      */ 
-    std::vector<Point> calcCells(const InfluenceSource &source);
+    std::vector<Point> calcCells(const InfluenceSource &src);
 
     /**
      *  @propagate: Updates the influence values of every source on the 
