@@ -49,7 +49,13 @@ int main(int argc, char* argv[]) {
 #if LINUX_USE_SOFTWARE_RENDER
     coordinator.AddCommandLine("-osmesapath /usr/lib/x86_64-linux-gnu/libOSMesa.so");
 #else
-    coordinator.AddCommandLine("-eglpath libEGL.so");
+    //Original
+    //coordinator.AddCommandLine("-eglpath libEGL.so");
+
+    //Other
+    coordinator.AddCommandLine(
+            "-eglpath /usr/lib/nvidia-384/libEGL.so");
+
 #endif
 #endif
 

@@ -1,14 +1,36 @@
 #include "common.h"
+#include "flocking.h"
 #include <iostream>
+#include <stdlib.h>
 
+#include "sc2renderer/sc2_renderer.h"
+
+//Scale for window rendering
+//16:9 scale
+//#define SCALE 60
+//4:3 scale
+#define SCALE 240
+const int kMapX = 4 * SCALE;
+const int kMapY = 3 * SCALE;
+const int kMiniMapX = 220;
+const int kMiniMapY = 200;
+
+const sc2::Unit *leader; //global group leader
+float group_health = 0.0; //group health
+sc2::Units marines; //group of marines in the simulation
+sc2::Units roaches; //group of enemy roaches
+
+//Original
+//using namespace sc2;
+namespace sc2 {
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) {
     int image_width = game_info.options.feature_layer.minimap_resolution_x;
     int image_height = game_info.options.feature_layer.minimap_resolution_y;
     float map_width = (float)game_info.width;
     float map_height = (float)game_info.height;
-        std::cout <<  "Map " << game_info.map_name << std::endl;
-    std::cout <<  "Width " << game_info.options.feature_layer.minimap_resolution_x << std::endl;
-        std::cout << "Height: " << game_info.options.feature_layer.minimap_resolution_y << std::endl;
+    std::cout << "Map " << game_info.map_name << std::endl;
+    std::cout << "Width " << game_info.options.feature_layer.minimap_resolution_x << std::endl;
+    std::cout << "Height: " << game_info.options.feature_layer.minimap_resolution_y << std::endl;
 
 
     // Pixels always cover a square amount of world space. The scale is determined
@@ -27,4 +49,189 @@ Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) 
     int image_y = static_cast<int>((image_relative_y / pixel_size));
 
     return Point2DI(image_x, image_y);
+}
+
+void PathingBot::OnGameStart() {
+    const ObservationInterface* obs = Observation();
+    const GameInfo& game_info = obs->GetGameInfo();
+    uint32_t gameLoop = obs->GetGameLoop();
+    Point2D center = GetMapCenter();
+    Point2D playable_max = game_info.playable_max;
+    //renderer::Initialize("Rendered", 50, 50, kMiniMapX + kMapX, std::max(kMiniMapY, kMapY));
+
+    
+
+    //Select all marines
+    marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+    roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));
+
+    //Get the initial group health
+    group_health = GetGroupHealth(marines);
+
+    //Move all marines to the center of the map on startup
+    for (const auto &marine : marines) {
+        std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
+    }
+    //Pick a leader and flock units on initialization
+    leader = SelectLeader(marines);
+    Flock(this, marines, leader, playable_max);
+
+    //Get all marines' locations
+}
+
+void PathingBot::OnStep() {
+    const ObservationInterface* obs = Observation();
+    const GameInfo& game_info = obs->GetGameInfo();
+    uint32_t game_loop = obs->GetGameLoop();
+    uint32_t pathing_freq = 30; //How often we run our algorithm
+    uint32_t info_freq = pathing_freq; //How often we print game info
+    uint32_t update_freq = pathing_freq; //How often we update game info
+    Point2D playable_max = game_info.playable_max; //maximum playable Point on the map
+    Point2D center = GetMapCenter();
+    float radius = 2.0; //Radius threshold for IsNear(), 2.0 is a pretty good value
+
+    /*Units marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+    Units roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));*/
+    //Path units
+    if (game_loop % pathing_freq == 0) {
+        for (const auto& marine : marines) {
+            //Move units to the center if they are not "near" the center, and not the leader
+            if (!IsNear(marine, center, radius) && (marine != leader)) {
+                Actions()->UnitCommand(marine, ABILITY_ID::MOVE, center);
+                //Actions()->UnitCommand(marine, ABILITY_ID::ATTACK_ATTACK, playable_max);
+            }
+        }
+        //Flock(this, marines, leader, playable_max);
+    }
+    //Update info
+    if (game_loop % update_freq == 0) {
+        marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
+        group_health = GetGroupHealth(marines);
+    }
+    //Print Info
+    if (game_loop % info_freq == 0) {
+        //Print game info
+        std::cout << "Centroid location: (" << GetCentroid(marines).x << "," << GetCentroid(marines).y
+            << ")\n";
+        std::cout << "Group health: " << group_health << "\n";
+    }
+    
+    /*
+    //Move all marines to the center of the map
+    for (const auto &marine : marines) {
+        Point2D center = GetMapCenter();
+        Point2D move_location = { game_info.playable_max.x, marine->pos.y };
+        //Actions()->UnitCommand(marine, ABILITY_ID::MOVE, game_info.playable_max);
+        //Actions()->UnitCommand(marine, ABILITY_ID::MOVE, rand);
+        Actions()->UnitCommand(marine, ABILITY_ID::MOVE, move_location);
+        std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
+    }
+    */
+
+    /*
+    //Periodically print game info
+    if (gameLoop % 100 == 0) {
+        PrintMinerals();
+    }
+    */
+
+    // moveCamera();
+    //TryBuildSupplyDepot();
+    //TryBuildBarracks();
+    //Render();
+}
+
+void PathingBot::OnGameEnd() {
+    //Update group health
+    group_health = GetGroupHealth(marines);
+    //renderer::Shutdown();
+    std::cout << "**** Game end info: *****\n";
+    std::cout << "Group health: " << group_health << "\n";
+}
+
+void PathingBot::OnUnitIdle(const Unit* unit) {
+    switch (unit->unit_type.ToType()) {
+        case UNIT_TYPEID::TERRAN_MARINE: {
+            const GameInfo& game_info = Observation()->GetGameInfo();
+            //Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, game_info.enemy_start_locations.front());
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+}
+
+const Unit* PathingBot::SelectLeader(const Units& units) {
+    if (units.size() == 0) {
+        return nullptr;
+    }
+    const Unit *leader = nullptr;
+    leader = units[(GetRandomInteger(0, int(units.size()) - 1))];
+    return leader;
+}
+
+Point2D PathingBot::GetMapCenter() {
+    const GameInfo& game_info = Observation()->GetGameInfo();
+    Point2D center{};
+    center.x = game_info.playable_max.x / 2;
+    center.y = game_info.playable_max.y / 2;
+    return center;
+}
+
+Point2D PathingBot::GetCentroid(const Units& units) {
+    Point2D centroid{0.0, 0.0};
+    if (units.size() == 0) {
+        return centroid;
+    }
+    //Sum up all unit x and y positions
+    for (const auto &unit : units) {
+        centroid.x += unit->pos.x;
+        centroid.y += unit->pos.y;
+    }
+    //Divide centroid location by total number of units
+    centroid.x /= units.size();
+    centroid.y /= units.size();
+    return centroid;
+}
+
+bool PathingBot::IsNear(const Unit* unit, Point2D p, float radius) {
+    if (!unit) {
+        return false;
+    }
+    return((abs(unit->pos.x - p.x) < radius) && (abs(unit->pos.y - p.y) < radius));
+
+}
+
+float PathingBot::GetGroupHealth(const Units& units) {
+    if (units.size() == 0) {
+        return 0.0;
+    }
+    float health = 0.0;
+    for (const auto& unit : units) {
+        health += unit->health;
+    }
+    return health;
+}
+
+//Returns the number of a given type of unit/building
+size_t PathingBot::CountUnitType(UNIT_TYPEID unit_type) {
+    return Observation()->GetUnits(Unit::Alliance::Self, IsUnit(unit_type)).size();
+}
+
+/* ***** NOT WORKING/UNUSED FUNCTIONS***** */
+//Not used
+void PathingBot::Render() {
+    const SC2APIProtocol::Observation* observation = Observation()->GetRawObservation();
+    const SC2APIProtocol::ObservationRender& render = observation->render_data();
+
+    const SC2APIProtocol::ImageData& minimap = render.minimap();
+    renderer::ImageRGB(&minimap.data().data()[0], minimap.size().x(), minimap.size().y(), 0, std::max(kMiniMapY, kMapY) - kMiniMapY);
+
+    const SC2APIProtocol::ImageData& map = render.map();
+    renderer::ImageRGB(&map.data().data()[0], map.size().x(), map.size().y(), kMiniMapX, 0);
+
+    renderer::Render();
+}
+
 }
