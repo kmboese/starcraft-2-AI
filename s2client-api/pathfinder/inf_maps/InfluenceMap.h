@@ -64,6 +64,26 @@ public:
     void createSource(Point pt, float rad);
 
     /**
+     *  @createMultSources: Creates multiple influence sources. Used for
+     *      updating map or creating all sources at once.
+     * 
+     *  @srcs: Vector of sources.
+     * 
+     *  Stores sources in private vector of sources.
+     */ 
+    void createMultSources(std::vector<InfluenceSource> &srcs);
+
+    /**
+     *  @updateAllSources: Updates sources vector with influence source's new 
+     *      positon.
+     * 
+     *  @srcs: Vector of sources with new locations.
+     * 
+     *  Stores sources in private vector of sources.
+     */ 
+    void updateAllSources(const std::vector<InfluenceSource> srcs);
+
+    /**
      *  @getNumRows: Return the number of rows in influence map.
      */ 
     unsigned int getNumRows();
@@ -115,7 +135,7 @@ public:
      *  @decay: How much influence values decay with distance. Should be the
      *      same value used for propagate decay.
      */ 
-    void updateMap(float decay);
+    void updateMap(const std::vector<InfluenceSource> srcs, float decay);
 
     /** 
      *  @printMap: Prints entire 2D grid with delimiters. Used for debugging.

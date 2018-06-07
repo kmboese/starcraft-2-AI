@@ -90,20 +90,38 @@ void InfluenceMap::createSource(Point pt, float rad) {
                 continue;
             }
 
-            // If distance from point to center is leq the radius of the circle,
-            //  initialize the circle. 
+            /* If distance from point to center is leq the radius of the circle,
+             initialize the circle. */
             int x_coor = src.pt.x - j;
-            int y_coor = src.pt.y - i;
+            int y_coor = i - src.pt.y;
             if ((int_pow(x_coor, 2) + int_pow(y_coor, 2)) 
                 <= int_pow(src.radius, 2))
             {
-                infMap[i][j] = 0;
+                // Need to convert i for Cartesian plane
+                int converted_i = infMap.size() - 1 - i;
+                infMap[converted_i][j] = 0;
             }
         }
     }  
 
     sources.push_back(src);
 } // end createSource()
+
+
+void InfluenceMap::createMultSources(std::vector<InfluenceSource> &srcs) {
+    for (unsigned int i = 0; i < srcs.size(); ++i) {
+        createSource(srcs[i].pt, srcs[i].radius);
+    }
+} // end createMultSources
+
+
+void InfluenceMap::updateAllSources(const std::vector<InfluenceSource> srcs) {
+    // Clear everything in old vector of sources
+    sources.clear();
+
+    // Update sources vector
+    sources = srcs;
+}
 
 unsigned int InfluenceMap::getNumRows() {
     return infMap.size();
@@ -139,8 +157,8 @@ float InfluenceMap::exponentialDecay(const InfluenceSource &source,
 
 
 std::vector<Point> InfluenceMap::calcCells(const InfluenceSource &src) {
-    // Cells within radius of source. For now it will just be a square
-    //  around the source's center.
+    /* Cells within radius of source. For now it will just be a square
+     around the source's center. */
     std::vector<Point> cells;
 
     int minX = floor(src.pt.x - src.radius);
@@ -175,17 +193,13 @@ std::vector<Point> InfluenceMap::calcCells(const InfluenceSource &src) {
                 continue;
             }
 
-            // Contruct point without an actual constructor because of InfSource
-            //  constructor conflicts
-            Point cell;
-            cell.x = j;
-            cell.y = i;
+            Point cell(j, i);
 
             cells.push_back(cell);
         }
     }
 
-    return cells;    // propagate map
+    return cells; 
 
 } // end calcCells
 
@@ -217,9 +231,17 @@ void InfluenceMap::propagate(float decay) {
     }
 } // end propagate()
 
-void InfluenceMap::updateMap(float decay) {
+void InfluenceMap::updateMap(const std::vector<InfluenceSource> srcs, 
+    float decay) 
+{
     // Clear influence map
     initMap();
+
+    // Update sources vector with new location
+    updateAllSources(srcs);
+
+    // Create new sources in influence map using new updated sources vector
+    createMultSources(sources);
 
     // Propagate map
     propagate(decay);
