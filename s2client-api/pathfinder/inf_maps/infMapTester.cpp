@@ -40,36 +40,23 @@ void TEST_INIT_MAP(int rows, int cols) {
 
 void TEST_CREATE_SOURCE(InfluenceMap map) {
     // unsigned int numSources = 2;
-    Point pt1;
-    pt1.x = 5;
-    pt1.y = 4;
-    map.createSource(pt1, 21);
+    // map.createSource(5, 4, 3.5);
 
-    // Point pt2;
-    // pt2.x = 0;
-    // pt2.y = 9;
-    // map.createSource(pt2, 0.2);
+    map.createSource(0, 9, 21);
 
     // assert(map.getNumSources() == numSources);
     
     std::cout << "Num sources: " << map.getNumSources() << std::endl;
 
-    float decay = 0;
-    map.propagate(decay);
+    // float decay = 0;
+    // map.propagate(decay);
     map.printMap();
 }
 
 void TEST_PROPAGATE(InfluenceMap map) {
     // Create 2 sources
-    Point pt1;
-    pt1.x = 5;
-    pt1.y = 4;
-    map.createSource(pt1, 3.5);
-
-    Point pt2;
-    pt2.x = 1;
-    pt2.y = 4;
-    map.createSource(pt2, 0.2);
+    map.createSource(5, 4, 3.5);
+    map.createSource(1, 4, 0.2);
 
     // Test propagate for one cycle
     float decay = 0.5;

@@ -36,10 +36,10 @@ public:
      *      for example there will be one map for our bot's units, and another
      *      map for enemy units.
      * 
-     *  @rows: Number of rows in the 2D grid.
-     *  @cols: Number of columns in the 2D grid.
+     *  @rows: Number of rows in the 2D grid. The y-axis.
+     *  @cols: Number of columns in the 2D grid. The x-axis.
      */ 
-    InfluenceMap(int rows, int cols);
+    InfluenceMap(int y_rows, int x_cols);
 
     /** 
      *  @initMap: Initialize each of the map's cells with value 1.
@@ -53,7 +53,7 @@ public:
      * 
      *  Stores sources in private vector of sources.
      */ 
-    void createSource(Point pt, float rad);
+    void createSource(int x, int y, float rad);
 
     /**
      *  @getNumRows: Return the number of rows in influence map.
@@ -115,6 +115,11 @@ public:
     void printMap();
 
 private:
+    /**
+     * @infMap: The influence map. Uses Cartesian coordinates (SC2 coordinates),
+     *      so bottom left is (0,0) and top right is (maxX, maxY). X-coor are on
+     *      horizontal axis and y-coor are on vertical axis.
+     */ 
     std::vector<std::vector <float>> infMap;
     std::vector<InfluenceSource> sources;
 };

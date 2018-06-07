@@ -13,11 +13,27 @@
 // Maximum influence assuming influence map only deals with positive values
 #define maxInf 9999
 
-InfluenceMap::InfluenceMap(int rows, int cols) {
+// Power function for integers
+int int_pow(int base, int exp) {
+    int result = 1;
+    
+    for (int i = 0; i < exp; ++i) {
+        result *= base;
+    }
+    return result;
+}
+
+InfluenceMap::InfluenceMap(int y_rows, int x_cols) {
+    if (y_rows < 0 || x_cols < 0) {
+        std::cerr << "Invalid dimensions--dimensions cannot be negative\n" 
+            << std::endl;
+        exit(0);
+    }
+
     std::vector<std::vector<float> > infMap;
     
-    for (int i = 0; i < rows; ++i) {
-        std::vector<float> column(cols);
+    for (int i = 0; i < y_rows; ++i) {
+        std::vector<float> column(x_cols);
         infMap.push_back(column);
     }
 
@@ -26,6 +42,7 @@ InfluenceMap::InfluenceMap(int rows, int cols) {
 
 
 void InfluenceMap::initMap() {
+    // Rows correspond to y-axis; columns correspond to x-axis.
     for (unsigned int row = 0; row < infMap.size(); ++row) {
         for (unsigned int col = 0; col < infMap[row].size(); ++col) {
             infMap[row][col] = INF;
@@ -34,12 +51,17 @@ void InfluenceMap::initMap() {
 } // end initMap()
 
 
-void InfluenceMap::createSource(Point pt, float rad) {
+void InfluenceMap::createSource(int x, int y, float rad) {
+    Point pt;
+    pt.x = x;
+    pt.y = y;
 
     InfluenceSource src(pt, rad);
 
-    int roundedRadius = round(src.radius);
+    // int roundedRadius = round(src.radius);
 
+    /* Find bounds of source. Rows correspond to y-axis; columns correspond to
+        x-axis. */
     int minX = floor(src.pt.x - src.radius);
     int minY = floor(src.pt.y - src.radius);
     int maxX = round(src.pt.x + src.radius);
@@ -50,33 +72,37 @@ void InfluenceMap::createSource(Point pt, float rad) {
         exit(0);
     }
 
-    for (int i = minX; i <= maxX; ++i) {
-        // Radius out of bounds. Continue until hit first element in map.
-        if (i < 0) {
-            continue;
-        }
+    // Translate vector 2d grid into Cartesian plane.
+    for (int i = maxY; i >= minY; --i) { // rows: y
         /* Radius out of bounds. Should exit since further calculations will not
           be saved. */
-        if ((unsigned int)i >= infMap.size()) {
+        if (i < 0) {
             break;
         }
 
-        for (int j = minY; j <= maxY; ++j) {
+        // Radius out of bounds. Continue until hit first element in map.
+        if ((unsigned int)i >= infMap.size()) {
+            continue;
+        }
+
+        for (int j = minX; j <= maxX; ++j) { // cols: x
+            if (j >= 0 && (unsigned int)j >= infMap[i].size()) {
+                break;
+            }
+
             if (j < 0) {
                 continue;
             }
 
-            if ((unsigned int)j >= infMap[i].size()) {
-                break;
-            }
-
             // If distance from point to center is leq the radius of the circle,
-            //  initialize the circle
-            if ((pow(src.pt.x - i, 2) + pow(src.pt.y - j, 2)) 
-                <= pow(roundedRadius, 2)) 
+            //  initialize the circle. 
+            int x_coor = src.pt.x - j;
+            int y_coor = src.pt.y - i;
+            if ((int_pow(x_coor, 2) + int_pow(y_coor, 2)) 
+                <= int_pow(src.radius, 2))
             {
                 infMap[i][j] = 0;
-            }     
+            }
         }
     }  
 
