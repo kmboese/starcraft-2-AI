@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <algorithm>
+#include <limits>
 
 #include "sc2renderer/sc2_renderer.h"
 
@@ -52,7 +53,7 @@ void PathingBot::OnGameStart() {
         //std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
     }
     //Pick a leader and flock units on initialization
-    leader = SelectLeader(marines);
+    leader = SelectLeader(marines, goal);
     Flock(this, marines, leader, center);
 
     //Initialize path finding
@@ -153,7 +154,7 @@ void PathingBot::OnUnitDestroyed(const Unit* unit) {
     //Choose and path a new leader if the leader is killed
     if (unit == leader) {
         std::cout << "\t***** Event: new leader chosen! *****" << std::endl;
-        leader = SelectLeader(marines);
+        leader = SelectLeader(marines, goal);
         Flock(this, marines, leader, goal);
         //Separate(this, marines);
     }
@@ -186,12 +187,20 @@ void PathingBot::OnGameEnd() {
 #endif
 }
 
-const Unit* PathingBot::SelectLeader(const Units& units) {
+const Unit* PathingBot::SelectLeader(const Units& units, Point2D& goal) {
     if (units.size() == 0) {
         return nullptr;
     }
+    float dist = std::numeric_limits<float>::max();
     const Unit *leader = nullptr;
-    leader = units[(GetRandomInteger(0, int(units.size()) - 1))];
+    //Select the leader to be the unit closest to the goal
+    for (const auto& unit : units) {
+        if (Distance2D(unit->pos, goal) < dist) {
+            dist = Distance2D(unit->pos, goal);
+            leader = unit;
+        }
+    }
+    //leader = units[(GetRandomInteger(0, int(units.size()) - 1))];
     return leader;
 }
 
@@ -274,6 +283,7 @@ bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Poi
     if (outPath.size() == 0) {
         return false;
     }
+    //If the leader is not near the next A* point, keep moving to the previous point
     else if (!IsNear(leader, next_point, TILE_RADIUS)) {
         float dist = Distance2D(leader->pos, next_point);
         //std::cout << "\tDEBUG: leader is " << dist << " away from the next point\n";
@@ -294,9 +304,10 @@ bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Poi
         }
         return false;
     }
+    //If the leader is near the next A* point, get the next point and move the units to it
     else {
         //std::cout << "\tDEBUG: moving group to the next point...\n";
-        PrintPoint2D(next_point);
+        //PrintPoint2D(next_point);
         next_point = ConvertToPoint2D(path.back());
         path.pop_back();
         //MoveUnits(bot, units, next_point);
