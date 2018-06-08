@@ -148,8 +148,6 @@ void PathingBot::OnStep() {
         //End the game after the goal is reached
         else {
             Separate(this, marines);
-            std::cout << "Position of leader:\n";
-            PrintPoint2D(leader->pos);
         }
     }
     //Keep the marines regularly separated out, once centered
@@ -183,9 +181,6 @@ void PathingBot::OnUnitDestroyed(const Unit* unit) {
         leader = SelectLeader(marines, goal);
         Flock(this, marines, leader, goal);
         //Separate(this, marines);
-    }
-    else {
-        //std::cout << "\tEvent: non-leader marine died" << std::endl;
     }
 }
 
