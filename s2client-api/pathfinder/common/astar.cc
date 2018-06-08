@@ -369,12 +369,9 @@ double AStarPathFinder::GetInfluence(int x, int y)
     for (vector<InfluenceMap*>::iterator it = mInfMapList.begin(); it != mInfMapList.end(); ++it)
     {
         InfluenceMap* pMap = *it;
-        //InfluenceMap::getInfMap() returns *copy* of the whole map on very call, *not* the actual map
-        //thus, this code will be exceptionally slow until InfluenceMap is made not to use copy constructors
-        //in InfluenceMap::getInfMap() call.
         double d = pMap->getInfMap()[x][y];
 
-        //christine says use only >= 0
+        //Use only >= 0
         if (d >= 0.0)
             d += pMap->getInfMap()[x][y];
     }
