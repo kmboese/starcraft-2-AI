@@ -23,7 +23,7 @@ bool Flock(Agent *bot, const Units& units, const Unit* leader, Point2D &move_poi
             //NOTE: still messing with the multiplier
             float mult = 1.0f;
             //float mult = 1.0f*Distance2D(unit->pos, move_point);
-            Point2D adjustment = GetNeighborsDistance(unit, units);
+            Point2D adjustment = GetNeighborsOffset(unit, units, unit->radius);
             //std::cout << "\tDEBUG: distance from unit to others is " << sqrt(std::pow(adjustment.x,2) + std::pow(adjustment.y, 2)) << "\n";
             //float mult = 1 / (sqrt(std::pow(adjustment.x, 2) + std::pow(adjustment.y, 2)));
             move_point.x += mult*adjustment.x;
@@ -92,7 +92,7 @@ bool MoveFromNeighbors(Agent* bot, const Units& units) {
     
     for (const auto& unit : units) {
         Point2D dist{};
-        dist = GetNeighborsDistance(unit, units);
+        dist = GetNeighborsOffset(unit, units, unit->radius);
         //If unit is withing range of its neighbors, move it away from them
         if (Distance2D(dist, Point2D{ 0.0, 0.0 }) > 0.001f) {
             Point2D move_location{};
@@ -105,7 +105,8 @@ bool MoveFromNeighbors(Agent* bot, const Units& units) {
     return separated; 
 }
 
-Point2D GetNeighborsDistance(const Unit* unit, const Units& neighbors) {
+Point2D GetNeighborsOffset(const Unit* unit, const Units& neighbors, float radius) {
+    radius *= SEPARATION_MULT; //units further than this distance away are not considered neighbors
     Point2D diff{0.0, 0.0};
     if (neighbors.size() == 0) {
         return diff;
@@ -113,13 +114,37 @@ Point2D GetNeighborsDistance(const Unit* unit, const Units& neighbors) {
     //Sum total distance 
     for (const auto& neighbor : neighbors) {
         //Don't check the unit against itself
-        if (neighbor != unit && (Distance2D(unit->pos, neighbor->pos) < UNIT_RADIUS) ) {
+        if ( (neighbor != unit) && (Distance2D(unit->pos, neighbor->pos) < radius) ) {
             diff.x += unit->pos.x - neighbor->pos.x;
             diff.y += unit->pos.y - neighbor->pos.y;
         }
     }
     diff /= float(neighbors.size());
     return diff;
+}
+
+Point2D GetCentroid(const Units& units) {
+    Point2D centroid{ 0.0, 0.0 };
+    if (units.size() == 0) {
+        return centroid;
+    }
+    //Sum up all unit x and y positions
+    for (const auto &unit : units) {
+        centroid.x += unit->pos.x;
+        centroid.y += unit->pos.y;
+    }
+    //Divide centroid location by total number of units
+    centroid.x /= units.size();
+    centroid.y /= units.size();
+    return centroid;
+}
+
+Point2D GetCentroidOffset(const Unit* unit, const Units& units) {
+    Point2D offset{ 0.0, 0.0 };
+    if (units.size() == 0){
+        return offset;
+    }
+    return (unit->pos - GetCentroid(units));
 }
 
 }

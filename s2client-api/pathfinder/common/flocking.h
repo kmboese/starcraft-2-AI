@@ -28,7 +28,11 @@ bool Separate(Agent *bot, const Units& units);
 bool MoveFromCentroid(Agent* bot, const Units& units);
 //Moves a group of units away from each other
 bool MoveFromNeighbors(Agent* bot, const Units& units);
-//Return the total distance from all neighbor marines
-Point2D GetNeighborsDistance(const Unit* unit, const Units& neighbors);
+//Return the offset point from all neighboring units that are within a certain radius of the target unit
+Point2D GetNeighborsOffset(const Unit* unit, const Units& neighbors, float radius);
+//Returns the center point of a group of units
+Point2D GetCentroid(const Units& units);
+//Returns the distance of a unit from the centroid of a group
+Point2D GetCentroidOffset(const Unit* unit, const Units& units);
 
 }
