@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
     //coordinator.StartGame(sc2::kMapBelShirVestigeLE);
     //coordinator.StartGame("D:\\Games\\Starcraft II\\StarCraft II\\Maps\\Melee\\Simple64.SC2Map");
     //Use this as baseline map for pathing marines
-    coordinator.StartGame(sc2::kMapPathfinderV2);
+    coordinator.StartGame(sc2::kMapPathfinderInfAndAstar);
 
     while (coordinator.Update()) {
         if (sc2::PollKeyPress()) {
