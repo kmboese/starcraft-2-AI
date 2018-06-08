@@ -77,7 +77,7 @@ InfluenceMap* CreateInfluenceMapEnemy(const ObservationInterface* obs)
     {
         const Unit* unit = *it;
         Point pt((int)unit->pos.x, (int)unit->pos.y);
-        std::cout << "Point: (" << pt.x << ", " << pt.y << ")\n";
+        std::cout << "Point: (" << pt.x << ", " << pt.y << ") Radius: [" << unit->radius << ")\n";
         InfluenceSource is(pt, unit->radius);
         roaches2.push_back(is);
     }
@@ -109,7 +109,7 @@ void PathingBot::OnStep() {
     {
         mpPathFinder = new AStarPathFinder(game_info, true); //pathFinder object for A*
         InfluenceMap* pInfMap = CreateInfluenceMapEnemy(obs);  //got influence map from somewhere
-        //mpPathFinder->AddInfluenceMap(pInfMap); //add influence map
+        mpPathFinder->AddInfluenceMap(pInfMap); //add influence map
     }
 
     //Update Info
