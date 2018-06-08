@@ -43,6 +43,9 @@ const int kMiniMapY = 200;
 namespace sc2 {
 class PathingBot : public Agent {
 public:
+    PathingBot();
+    ~PathingBot() override;
+
     virtual void OnGameStart() final;
     virtual void OnStep() final;
     virtual void OnUnitIdle(const Unit* unit) final;
@@ -69,6 +72,7 @@ private:
     void Render();
     size_t CountUnitType(UNIT_TYPEID unit_type);
 
+    AStarPathFinder* mpPathFinder;
 };
 
 /* ***** Movement functions ***** */

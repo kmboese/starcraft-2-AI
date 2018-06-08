@@ -24,6 +24,17 @@ bool separated = false; //indicates the group has been separated out
 bool path_initialized = false; //indicates the initial A* path has been created
 bool goal_reached = false; //indicates the group of units has reached its goal.
 
+PathingBot::PathingBot() : mpPathFinder(NULL) {}
+
+PathingBot::~PathingBot()
+{
+    if (mpPathFinder)
+    {
+        delete mpPathFinder;
+        mpPathFinder = NULL;
+    }
+}
+
 void PathingBot::OnGameStart() {
     const ObservationInterface* obs = Observation();
     const GameInfo& game_info = obs->GetGameInfo();
@@ -65,7 +76,9 @@ void PathingBot::OnStep() {
     uint32_t update_freq = 10; //How often we update game info
     uint32_t sep_freq = pathing_freq / 1; //how often we spread out the marines
     Point2D center = GetMapCenter();
-    AStarPathFinder pathFinder(game_info, true); //pathFinder object for A* 
+
+    if (!mpPathFinder)
+        mpPathFinder = new AStarPathFinder(game_info, true); //pathFinder object for A*
 
     //Update Info
     marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
@@ -85,7 +98,7 @@ void PathingBot::OnStep() {
         else if (!path_initialized) {
             Point2D leader_pos = leader->pos;
             Point2DI int_leader_pos = ConvertToPoint2DI(leader_pos);
-            path_initialized = InitPath(pathFinder, int_leader_pos, int_goal, outPath);
+            path_initialized = InitPath(*mpPathFinder, int_leader_pos, int_goal, outPath);
             if (path_initialized) {
                 std::cout << "\tDEBUG: path initialized!\n";
             }
