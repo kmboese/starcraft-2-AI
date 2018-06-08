@@ -67,6 +67,34 @@ void PathingBot::OnGameStart() {
     Flock(this, marines, leader, center);
 }
 
+
+InfluenceMap* CreateInfluenceMapEnemy(const ObservationInterface* obs)
+{
+    Units roaches;
+    roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));
+    std::vector<InfluenceSource> roaches2;
+    for (std::vector<const Unit*>::iterator it = roaches.begin(); it != roaches.end(); ++it)
+    {
+        const Unit* unit = *it;
+        Point pt((int)unit->pos.x, (int)unit->pos.y);
+        std::cout << "Point: (" << pt.x << ", " << pt.y << ")\n";
+        InfluenceSource is(pt, unit->radius);
+        roaches2.push_back(is);
+    }
+
+    const GameInfo& game_info = obs->GetGameInfo();
+    int width = game_info.pathing_grid.width;
+    int height = game_info.pathing_grid.height;
+
+    InfluenceMap* pMap = new  InfluenceMap(height, width);
+    pMap->initMap();
+    pMap->createMultSources(roaches2);
+
+    pMap->printMap();
+    return pMap;
+}
+
+
 void PathingBot::OnStep() {
     const ObservationInterface* obs = Observation();
     const GameInfo& game_info = obs->GetGameInfo();
@@ -80,7 +108,7 @@ void PathingBot::OnStep() {
     if (!mpPathFinder)
     {
         mpPathFinder = new AStarPathFinder(game_info, true); //pathFinder object for A*
-        //InfluenceMap* pInfMap = ???; //got influence map from somewhere
+        InfluenceMap* pInfMap = CreateInfluenceMapEnemy(obs);  //got influence map from somewhere
         //mpPathFinder->AddInfluenceMap(pInfMap); //add influence map
     }
 
