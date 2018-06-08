@@ -15,7 +15,7 @@ To run the project on Windows, navigate to `<build_directory>\bin` to find the c
 
 # Examples of the Bot in Action
 * [Marines using A* and flocking](https://youtu.be/C1EvNho6o6A)
-* [Marines avoiding roaches using A*, flocking, and influence maps](https://www.youtube.com)
+* [Marines avoiding roaches using A*, flocking, and influence maps](https://youtu.be/r5OGAKJhQaE)
 
 # CS Concepts Involved
 * Algorithms
