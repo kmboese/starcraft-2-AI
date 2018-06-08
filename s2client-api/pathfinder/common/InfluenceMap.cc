@@ -241,7 +241,8 @@ std::vector<Point> InfluenceMap::calcCells(const InfluenceSource &src) {
                 continue;
             }
 
-            Point cell(j, i);
+            //Point cell(j, i);
+            Point cell(i, j);
 
             cells.push_back(cell);
         }
@@ -275,7 +276,7 @@ void InfluenceMap::propagate(float decay) {
 
             // Cap the influence
             //infMap[x][y] += MIN(calculatedInf, maxInf);
-            infMap[x][y] = 10.0f;
+            infMap[x][y] = 1000.0f;
         }
     }
 } // end propagate()
