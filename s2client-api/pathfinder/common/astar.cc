@@ -369,11 +369,11 @@ double AStarPathFinder::GetInfluence(int x, int y)
     for (vector<InfluenceMap*>::iterator it = mInfMapList.begin(); it != mInfMapList.end(); ++it)
     {
         InfluenceMap* pMap = *it;
-        double d = pMap->getInfMap()[x][y];
+        double d = pMap->getInfMap()[y][x];
 
         //Use only >= 0
         if (d >= 0.0)
-            d += pMap->getInfMap()[x][y];
+            inflTotal += d;
     }
     return inflTotal;
 }
