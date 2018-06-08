@@ -8,22 +8,21 @@
 void TEST_INIT_MAP(int rows, int cols);
 void TEST_CREATE_SOURCE(InfluenceMap map);
 void TEST_PROPAGATE(InfluenceMap map);
-void TEST_MAX_PROPAGATE();
 void TEST_UPDATE(InfluenceMap map);
 
 int main() {
-    // std::cout << "Testing initMap\n" << std::endl;
-    // TEST_INIT_MAP(4, 3);
+    std::cout << "Testing initMap\n" << std::endl;
+    TEST_INIT_MAP(4, 3);
 
     InfluenceMap map(10, 10);
     map.initMap();
 
-    // std::cout << "\nTesting createSource\n" << std::endl;
+    std::cout << "\nTesting createSource\n" << std::endl;
 
-    // TEST_CREATE_SOURCE(map);
+    TEST_CREATE_SOURCE(map);
 
-    // std::cout << "\nTesting propagate\n" << std::endl;
-    // TEST_PROPAGATE(map);
+    std::cout << "\nTesting propagate\n" << std::endl;
+    TEST_PROPAGATE(map);
 
     std::cout << "\nTesting update\n" << std::endl;
     TEST_UPDATE(map);
@@ -75,10 +74,6 @@ void TEST_PROPAGATE(InfluenceMap map) {
     map.printMap();
 }
 
-// Create a massive map--with overlap--and check values
-void TEST_MAX_PROPAGATE() {
-
-}
 
 // Create 2 sources and propagate 3 times
 void TEST_UPDATE(InfluenceMap map) {
@@ -100,7 +95,8 @@ void TEST_UPDATE(InfluenceMap map) {
     float decay = 0.3;
     map.propagate(decay);
 
-    std::cout << "Map after one propagation\n" << std::endl;
+    std::cout << "\n\t-----------------------------------------\n" << std::endl;
+    std::cout << "\n\nMap after one propagation\n" << std::endl;
     map.printMap();
 
     // Update sources new position. Source_1 at (7, 4), source_2 at (2, 3)
@@ -110,7 +106,8 @@ void TEST_UPDATE(InfluenceMap map) {
 
     map.updateMap(sources, decay); 
 
-    std::cout << "Map after one update\n" << std::endl;
+    std::cout << "\n\t-----------------------------------------\n" << std::endl;
+    std::cout << "\n\nMap after one update\n" << std::endl;
     map.printMap();
 
     // Update sources new position. Source_1 at (6, 7), source_2 at (5, 4)
@@ -120,5 +117,7 @@ void TEST_UPDATE(InfluenceMap map) {
     sources[1].pt.y = 4;
     map.updateMap(sources, decay);
     
-    std::cout << "Map after second update\n" << std:: endl;
+    std::cout << "\n\t-----------------------------------------\n" << std::endl;
+    std::cout << "\n\nMap after second update\n" << std:: endl;
+    map.printMap();
 } // end TEST_UPDATE()
