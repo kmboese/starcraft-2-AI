@@ -1,7 +1,6 @@
 #include "sc2api/sc2_api.h"
 #include "InfluenceMap.h"
 
-//void GoodbyeCruelWorld();
 namespace sc2
 {
 void PrintBestPath(std::vector<Point2DI>& outPath);
