@@ -90,7 +90,7 @@ InfluenceMap* CreateInfluenceMapEnemy(const ObservationInterface* obs)
     pMap->initMap();
     pMap->createMultSources(roaches2);
 
-    pMap->printMap();
+    //pMap->printMap();
     return pMap;
 }
 
@@ -402,16 +402,6 @@ Point2D ConvertToPoint2D(Point2DI& p) {
 
 void PrintPoint2D(const Point2D& p) {
     std::cout << "point: (" << p.x << ", " << p.y << ")\n";
-}
-
-std::vector<InfluenceSource> ConvertUnitsToInfluenceSources(const Units& units) {
-    std::vector<InfluenceSource> sources{};
-    if (units.size() == 0) {
-        return sources;
-    }
-    for (const auto& unit : units) {
-        InfluenceSource{ ConvertToPoint2DI(unit->pos), 1.0f };
-    }
 }
 
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) {
