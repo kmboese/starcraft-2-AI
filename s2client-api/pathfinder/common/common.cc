@@ -102,6 +102,9 @@ void PathingBot::OnStep() {
         else if (!path_initialized) {
             Point2D leader_pos = leader->pos;
             Point2DI int_leader_pos = ConvertToPoint2DI(leader_pos);
+            //Initialize Influence map
+            InfluenceMap im{ int_goal.y, int_goal.x };
+            //im.createMultSources(roaches);
             path_initialized = InitPath(*mpPathFinder, int_leader_pos, int_goal, outPath);
             if (path_initialized) {
                 std::cout << "\tDEBUG: path initialized!\n";
@@ -371,6 +374,16 @@ Point2D ConvertToPoint2D(Point2DI& p) {
 
 void PrintPoint2D(const Point2D& p) {
     std::cout << "point: (" << p.x << ", " << p.y << ")\n";
+}
+
+std::vector<InfluenceSource> ConvertUnitsToInfluenceSources(const Units& units) {
+    std::vector<InfluenceSource> sources{};
+    if (units.size() == 0) {
+        return sources;
+    }
+    for (const auto& unit : units) {
+        InfluenceSource{ ConvertToPoint2DI(unit->pos), 1.0f };
+    }
 }
 
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world) {
