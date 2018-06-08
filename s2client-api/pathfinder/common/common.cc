@@ -78,7 +78,11 @@ void PathingBot::OnStep() {
     Point2D center = GetMapCenter();
 
     if (!mpPathFinder)
+    {
         mpPathFinder = new AStarPathFinder(game_info, true); //pathFinder object for A*
+        //InfluenceMap* pInfMap = ???; //got influence map from somewhere
+        //mpPathFinder->AddInfluenceMap(pInfMap); //add influence map
+    }
 
     //Update Info
     marines = obs->GetUnits(Unit::Alliance::Self, IsUnit(UNIT_TYPEID::TERRAN_MARINE));
