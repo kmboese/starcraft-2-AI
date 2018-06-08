@@ -14,7 +14,8 @@ We targeted Windows 7/10 as the build environment for our project, so we recomme
 To run the project on Windows, navigate to `<build_directory>\bin` to find the compiled executables. Our AI executable is titled `project.exe`, while the rest are Blizzard's example executables. Note that in order for the executable to run, you need Starcraft 2 installed on your system. If the system doesn't detect your executable, you can pass the path to the executable as follows: `project.exe -e <path_to_executable>`. Note that the proper executable is not in the root install of the Starcraft 2 directory, but is rather located at `<starcraft_2_install>\Versions\BaseXXXXX\SC2_x64.exe`.
 
 # Examples of the Bot in Action
-* [Marines avoiding roaches](https://www.youtube.com)
+* [Marines using A* and flocking](https://youtu.be/C1EvNho6o6A)
+* [Marines avoiding roaches using A*, flocking, and influence maps](https://www.youtube.com)
 
 # CS Concepts Involved
 * Algorithms
