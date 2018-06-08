@@ -66,7 +66,7 @@ void PathingBot::OnGameStart() {
         //std::cout << "Marine pos: (" << marine->pos.x << "," << marine->pos.y << ")\n";
     }
     //Pick a leader and flock units on initialization
-    leader = SelectLeader(marines);
+    leader = SelectLeader(marines, goal);
     Flock(this, marines, leader, center);
 }
 
@@ -183,7 +183,7 @@ void PathingBot::OnUnitDestroyed(const Unit* unit) {
     //Choose and path a new leader if the leader is killed
     if (unit == leader) {
         std::cout << "\t***** Event: new leader chosen! *****" << std::endl;
-        leader = SelectLeader(marines);
+        leader = SelectLeader(marines, goal);
         Flock(this, marines, leader, goal);
         //Separate(this, marines);
     }
@@ -216,12 +216,20 @@ void PathingBot::OnGameEnd() {
 #endif
 }
 
-const Unit* PathingBot::SelectLeader(const Units& units) {
+const Unit* PathingBot::SelectLeader(const Units& units, Point2D& goal) {
     if (units.size() == 0) {
         return nullptr;
     }
+    float dist = std::numeric_limits<float>::max();
     const Unit *leader = nullptr;
-    leader = units[(GetRandomInteger(0, int(units.size()) - 1))];
+    //Select the leader to be the unit closest to the goal
+    for (const auto& unit : units) {
+        if (Distance2D(unit->pos, goal) < dist) {
+            dist = Distance2D(unit->pos, goal);
+            leader = unit;
+        }
+    }
+    //leader = units[(GetRandomInteger(0, int(units.size()) - 1))];
     return leader;
 }
 

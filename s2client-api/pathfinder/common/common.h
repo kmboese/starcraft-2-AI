@@ -61,7 +61,7 @@ private:
         * Selects one random unit from a group of units to be the group leader
         * Returns: a pointer to the leader Unit
     */
-    const Unit* SelectLeader(const Units& units);
+    const Unit* SelectLeader(const Units& units, Point2D& goal);
 
     /* ***** Location Functions ***** */
     //Returns the center point of the playable map space
