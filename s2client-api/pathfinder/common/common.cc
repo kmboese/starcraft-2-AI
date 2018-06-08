@@ -72,26 +72,27 @@ InfluenceMap* CreateInfluenceMapEnemy(const ObservationInterface* obs)
 {
     Units roaches;
     roaches = obs->GetUnits(Unit::Alliance::Enemy, IsUnit(UNIT_TYPEID::ZERG_ROACH));
-    std::vector<InfluenceSource> roaches2;
+    std::vector<InfluenceSource> infRoaches;
     for (std::vector<const Unit*>::iterator it = roaches.begin(); it != roaches.end(); ++it)
     {
         const Unit* unit = *it;
         Point pt((int)unit->pos.x, (int)unit->pos.y);
         std::cout << "Point: (" << pt.x << ", " << pt.y << ") Radius: [" << unit->radius << ")\n";
         InfluenceSource is(pt, unit->radius);
-        roaches2.push_back(is);
+        infRoaches.push_back(is);
     }
 
     const GameInfo& game_info = obs->GetGameInfo();
     int width = game_info.pathing_grid.width;
     int height = game_info.pathing_grid.height;
 
-    InfluenceMap* pMap = new  InfluenceMap(height, width);
+    InfluenceMap* pMap = new  InfluenceMap(width, height);
     pMap->initMap();
-    pMap->createMultSources(roaches2);
+    pMap->createMultSources(infRoaches);
 
     //pMap->printMap();
 
+    pMap->propagate(0.5);
     return pMap;
 }
 

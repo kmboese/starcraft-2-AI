@@ -112,5 +112,7 @@ Point2D ConvertToPoint2D(Point2DI& p);
 //Prints the x,y coordinates of a point with formatting
 void PrintPoint2D(const Point2D& p);
 
+InfluenceMap* CreateInfluenceMapEnemy(const ObservationInterface* obs);
+
 Point2DI ConvertWorldToMinimap(const GameInfo& game_info, const Point2D& world);
 }
