@@ -183,7 +183,7 @@ unsigned int InfluenceMap::getNumSources() {
     return sources.size();
 }
 
-std::vector<std::vector& <float>> InfluenceMap::getInfMap() {
+std::vector<std::vector <float>>& InfluenceMap::getInfMap() {
     return infMap;
 }
 

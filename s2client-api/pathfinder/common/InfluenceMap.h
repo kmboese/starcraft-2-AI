@@ -101,7 +101,7 @@ public:
     /**
      * @getInfMap: Returns the influence map
      */ 
-    std::vector<std::vector& <float>> getInfMap();
+    std::vector<std::vector <float>>& getInfMap();
 
     /**
      *  @exponentialDecay: Exponential decay function that returns influence
