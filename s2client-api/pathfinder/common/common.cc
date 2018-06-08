@@ -78,7 +78,8 @@ InfluenceMap* CreateInfluenceMapEnemy(const ObservationInterface* obs)
         const Unit* unit = *it;
         Point pt((int)unit->pos.x, (int)unit->pos.y);
         std::cout << "Point: (" << pt.x << ", " << pt.y << ") Radius: [" << unit->radius << ")\n";
-        InfluenceSource is(pt, unit->radius);
+        //InfluenceSource is(pt, unit->radius);
+        InfluenceSource is(pt, 2.0f);
         roaches2.push_back(is);
     }
 
@@ -86,9 +87,10 @@ InfluenceMap* CreateInfluenceMapEnemy(const ObservationInterface* obs)
     int width = game_info.pathing_grid.width;
     int height = game_info.pathing_grid.height;
 
-    InfluenceMap* pMap = new  InfluenceMap(height, width);
+    InfluenceMap* pMap = new  InfluenceMap(width, height);
     pMap->initMap();
     pMap->createMultSources(roaches2);
+    pMap->propagate(0.5); //0.5=decay factor (make this constant somwhere)
 
     //pMap->printMap();
     return pMap;
