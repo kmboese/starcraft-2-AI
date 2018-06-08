@@ -106,7 +106,6 @@ void PathingBot::OnStep() {
     uint32_t sep_freq = pathing_freq / 1; //how often we spread out the marines
     Point2D center = GetMapCenter();
 
-    //if (!mpPathFinder)
     if (!pathfinder_constructed)
     {
         mpPathFinder = new AStarPathFinder(game_info, true); //pathFinder object for A*
@@ -137,9 +136,6 @@ void PathingBot::OnStep() {
             InfluenceMap im{ int_goal.y, int_goal.x };
             //im.createMultSources(roaches);
             path_initialized = InitPath(*mpPathFinder, int_leader_pos, int_goal, outPath);
-            if (path_initialized) {
-                std::cout << "\tDEBUG: path initialized!\n";
-            }
         }
         //After separation, move units as a group
         else if (!goal_reached) {
@@ -285,13 +281,10 @@ bool PathLeader(Agent *bot, const Unit* leader, std::vector<Point2DI>& path) {
     else if (!IsNear(leader, next_point, TILE_RADIUS)) {
         bot->Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
         float dist = Distance2D(leader->pos, next_point);
-        std::cout << "\tDEBUG: leader is " << dist << " away from the next point\n";
         return false;
     }
     //Otherwise, save and remove the next path location from the path and move the leader to it
     else {
-        std::cout << "\tDEBUG: leader is moving to next point...\n";
-        PrintPoint2D(next_point);
         next_point = ConvertToPoint2D(path.back());
         path.pop_back();
         bot->Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
@@ -307,8 +300,6 @@ bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Poi
     }
     else if (!IsNear(leader, next_point, TILE_RADIUS)) {
         float dist = Distance2D(leader->pos, next_point);
-        std::cout << "\tDEBUG: leader is " << dist << " away from the next point\n";
-        PrintPoint2D(next_point);
         //MoveUnits(bot, units, next_point);
         for (const auto& unit : units) {
             //if (!IsNear(unit, leader->pos, UNIT_RADIUS) && (unit != leader) ) {
@@ -325,8 +316,6 @@ bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Poi
         return false;
     }
     else {
-        std::cout << "\tDEBUG: moving group to the next point...\n";
-        PrintPoint2D(next_point);
         next_point = ConvertToPoint2D(path.back());
         path.pop_back();
         //MoveUnits(bot, units, next_point);
@@ -391,7 +380,6 @@ bool CheckGoalReached(const Unit* leader, Point2D goal) {
     if (!leader) {
         return false;
     }
-    //std::cout << "\tDEBUG: leader is " << Distance2D(leader->pos, goal) << " from the goal\n";
     return(IsNear(leader, goal, GOAL_RADIUS));
 }
 
