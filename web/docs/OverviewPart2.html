@@ -1,0 +1,28 @@
+<h1 id="cs-concepts-involved">CS Concepts Involved</h1>
+<ul>
+<li>Algorithms<ul>
+<li>A*: a common path-finding algorithm for agents in games. This is essentially a modified version of Dijkstra&#39;s algorithm that considers the distance from the goal as well as the cost to traverse terrain in generating the shortest path for a unit to move to a goal. Inputs are the grid conversion of the game map, and output is a set of grid points as the shortest path.</li>
+<li>Flocking: a method of keeping units separated from each other using the centroid of a group of units and the distance between units to modify their direction of movement. Uses game data such as unit radius and relative unit positions to modify movement.</li>
+</ul>
+</li>
+<li>Data Structures<ul>
+<li>Game grid: to speed up computation, we converted the game map, which has granularity down to the pixel layer, into an integer grid, such that a 100x100 map in-game would translate to a 100x100 2D array of points. This allows for A* and influence maps to be calculated at a much lower cost, while still allowing for relatively good granularity of movement.</li>
+<li>Influence maps: a way to represent the influence units exert over a region of a map. In our case, we used the attack range and position of enemy Roaches as influence on the map that A* would take into consideration in its heuristic. As a result, our marines would avoid the attack radius of enemy units whenever possible. We updated the influence maps at a regular frequency whenever enemy Roaches moved, as their influence is linked to their position on the map.</li>
+</ul>
+</li>
+<li>Object-Oriented Design<ul>
+<li>The Blizzard API is heavily class and object based. We used concepts like inheritance in the construction of our bot, as well as polymorphism to over-ride behavior on in-game events, such as game start, internal game ticks, and unit deaths.</li>
+<li>We kept the implementation of our algorithms separate as much as possible, so we could develop and connect the algorithms to the game code independently. This allowed for faster development and meant we did not have to wait for a certain module to be made to make progress on another part of the bot. </li>
+</ul>
+</li>
+</ul>
+<h1 id="references">References</h1>
+<ol>
+<li><a href="http://aigamedev.com/open/tutorial/influence-map-mechanics/">Mechanics of Influence Mapping</a></li>
+<li><a href="http://nova.wolfwork.com/papers/Kiting_RTS_Influence_Maps.pdf">Kiting in RTS Games Using Influence Maps</a></li>
+<li><a href="https://arxiv.org/pdf/1803.02943.pdf">Influence Maps and Objective Functions in Starcraft</a></li>
+<li><a href="https://pythonhosted.org/testing/">Python Testing Tools Taxonomy</a></li>
+<li><a href="https://www.red3d.com/cwr/boids/">Boids (Flocking)</a></li>
+<li><a href="http://gameschoolgems.blogspot.com/2009/12/influence-maps-i.html">Game School Gems Influence Maps</a></li>
+<li><a href="https://www.phstudios.com/flocking-ai-series/">Flocking Tutorial Videos</a></li>
+</ol>

@@ -8,6 +8,14 @@
           = Haml::Engine.new(File.read('./partials/sidebar.haml')).render
         .col-9.content
           .container
-            %h1 Welcome to the AI Gore StarCraft II project site!
-            .embed-responsive.embed-responsive-16by9
-              %iframe.embed-responsive-item{:allow => "autoplay; encrypted-media", :allowfullscreen => "", :frameborder => "0", :height => "315", :src => "https://www.youtube-nocookie.com/embed/Sagg08DrO5U?rel=0", :width => "560"}
+            = Haml::Engine.new(File.read('./docs/OverviewPart1.html')).render
+            %h1 Examples of the Bot in Action
+            .row
+              .col-6         
+                .embed-responsive.embed-responsive-16by9
+                  %iframe.embed-responsive-item{:allow => "autoplay; encrypted-media", :allowfullscreen => "", :frameborder => "0", :height => "315", :src => "https://www.youtube-nocookie.com/embed/C1EvNho6o6A?rel=0", :width => "560"}
+              .col-6 
+                .embed-responsive.embed-responsive-16by9
+                  %iframe.embed-responsive-item{:allow => "autoplay; encrypted-media", :allowfullscreen => "", :frameborder => "0", :height => "315", :src => "https://www.youtube-nocookie.com/embed/r5OGAKJhQaE?rel=0", :width => "560"}
+
+            = Haml::Engine.new(File.read('./docs/OverviewPart2.html')).render
