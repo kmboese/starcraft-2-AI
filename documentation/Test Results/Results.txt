@@ -6,12 +6,18 @@ Goal point: top-right corner of playable space
 2. 13
 3. 103
 4. 148
+5. 148
+6. 132
 
 
 Results: A*, flocking, and influence maps
 Map: Pathfinder V3
 Value: End group health
 Goal point: top-right corner of playable space
-1. End Group Health: 
-2. End Group Health: 
-3. End Group Health: 
+1.  
+2.  
+3. 
+4.
+5.
+6.
+ 
