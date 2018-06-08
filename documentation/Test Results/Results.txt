@@ -1,0 +1,17 @@
+Results: A* and flocking:
+Map: Pathfinder V3
+Value: End group health
+Goal point: top-right corner of playable space
+1. 119
+2. 13
+3. 103
+4. 148
+
+
+Results: A*, flocking, and influence maps
+Map: Pathfinder V3
+Value: End group health
+Goal point: top-right corner of playable space
+1. End Group Health: 
+2. End Group Health: 
+3. End Group Health: 
