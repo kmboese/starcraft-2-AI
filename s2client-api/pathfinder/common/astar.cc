@@ -278,6 +278,8 @@ void AStarPathFinder::UpdatePos(int x, int y, double cost, int prevX, int prevY)
     {
         //new g and h
         int prevPos = GetGridPos(prevX, prevY);
+        double totalInfluence = GetInfluence(x, y);
+        cost += totalInfluence;
         double nextG = mpPosInfo[prevPos].g + cost;
         double nextH = CalcHeuristic(x, y);
 
@@ -355,8 +357,47 @@ const char* AStarPathFinder::GetErrorString(AStarPathError error)
     case NotPlayableDst: return "Destination Not Playable";
     case NotPathableSrc: return "Source Not Pathable";
     case NotPathableDst: return "Destination Not Pathable";
+    case InvalidInfMapWidth: return "Invalid Influence Map Width"; 
+    case InvalidInfMapHeight: return "Invalid Influence Map Height";
     }
     return "Undefined Error";
+}
+
+double AStarPathFinder::GetInfluence(int x, int y)
+{
+    double inflTotal = 0.0;
+    for (vector<InfluenceMap*>::iterator it = mInfMapList.begin(); it != mInfMapList.end(); ++it)
+    {
+        InfluenceMap* pMap = *it;
+        //InfluenceMap::getInfMap() returns *copy* of the whole map on very call, *not* the actual map
+        //thus, this code will be exceptionally slow until InfluenceMap is made not to use copy constructors
+        //in InfluenceMap::getInfMap() call.
+        double d = pMap->getInfMap()[x][y];
+
+        //christine says use only >= 0
+        if (d >= 0.0)
+            d += pMap->getInfMap()[x][y];
+    }
+    return inflTotal;
+}
+
+//adds influence map
+bool AStarPathFinder::AddInfluenceMap(InfluenceMap* pInfMap)
+{
+    //no map specified
+    if (!pInfMap)
+        return false;
+
+    //width of influence map does not match width of pathable map
+    if (pInfMap->getNumCols() != mWidth)
+        return SetError(InvalidInfMapWidth);
+
+    //height of influence map does not match height of pathable map
+    if (pInfMap->getNumRows() != mHeight)
+        return SetError(InvalidInfMapHeight);
+
+    mInfMapList.push_back(pInfMap);
+    return true;
 }
 
 //prints best path

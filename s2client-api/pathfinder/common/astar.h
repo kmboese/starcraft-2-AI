@@ -1,4 +1,5 @@
 #include "sc2api/sc2_api.h"
+#include "InfluenceMap.h"
 
 //void GoodbyeCruelWorld();
 namespace sc2
@@ -15,6 +16,8 @@ enum AStarPathError
     NotPlayableDst,
     NotPathableSrc,
     NotPathableDst,
+    InvalidInfMapWidth,
+    InvalidInfMapHeight,
 };
 
 //typedef for pair<double, pair<int, int>> type
@@ -86,6 +89,15 @@ public:
     //gets last error
     AStarPathError GetError() const {return mError;}
 
+    //adds influence map
+    bool AddInfluenceMap(InfluenceMap* pInfMap);
+
+    //clear list of influence maps
+    void ClearInfluenceMapList() {mInfMapList.clear();}
+
+    //get list of influence maps
+    std::vector<InfluenceMap*>& GetInfluenceMapList() {return mInfMapList;}
+
 protected:
 
     //update path
@@ -130,6 +142,9 @@ protected:
     //sets last error
     bool SetError(AStarPathError error) {mError = error; return false;}
 
+    //gets total influence from all added all influence maps for the given position
+    double GetInfluence(int x, int y);
+
 public:
 
     //gets error string for specifed error
@@ -150,6 +165,8 @@ protected:
     posInfo* mpPosInfo;            //position info array
     std::vector<Point2DI>* mpPath; //path on output
     std::set<openPos> openList;    //open list, set of current 'openPos'
+
+    std::vector<InfluenceMap*> mInfMapList; //list of added influence maps
 };
 
 } //namespace sc2
