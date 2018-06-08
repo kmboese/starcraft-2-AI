@@ -17,7 +17,7 @@ const float POINT_RADIUS = 2.0f;
 //Radius marines must be away from each other
 const float SEPARATION_RADIUS = 1.0f;
 //Multiplier for separation of units
-const float SEPARATION_MULT = 5.0f;
+const float SEPARATION_MULT = 2.0f;
 //Radius marines must be away from their centroid
 const float CENTROID_RADIUS = 2.0f;
 //Radius within which the leader is considered to have reached the goal
