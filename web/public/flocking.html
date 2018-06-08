@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AIGore StarCraft II Project</title>
+<script crossorigin='anonymous' integrity='sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo' src='https://code.jquery.com/jquery-3.3.1.slim.min.js'></script>
+<script crossorigin='anonymous' integrity='sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49' src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js'></script>
+<link crossorigin='anonymous' href='https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css' integrity='sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB' rel='stylesheet'>
+<script crossorigin='anonymous' integrity='sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T' src='https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js'></script>
+<link crossorigin='anonymous' href='https://use.fontawesome.com/releases/v5.0.13/css/all.css' integrity='sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp' rel='stylesheet'>
+
+<link href='./style.css' rel='stylesheet' type='text/css'>
+</head>
+
+<body>
+<div class='container-fluid'>
+<div class='row'>
+<div class='col-3 sidebar'>
+<div class='logo'>
+AI<br>Gore
+</div>
+<img class='img-fluid sc2-logo' src='game-logo-sc2.png'>
+<ul class='nav flex-column text-center mt-4'>
+<li class='nav-item'>
+<a class='nav-link' href='./index.html'>
+Overview
+<i class='fas fa-angle-right'></i>
+</a>
+</li>
+<li class='nav-item'>
+<a class='nav-link' href='./project-proposal.html'>
+Project Proposal
+<i class='fas fa-angle-right'></i>
+</a>
+</li>
+<li class='nav-item'>
+<a class='nav-link' href='./a-star.html'>
+A* Research
+<i class='fas fa-angle-right'></i>
+</a>
+</li>
+<li class='nav-item'>
+<a class='nav-link' href='./influence-maps.html'>
+Influence Maps Research
+<i class='fas fa-angle-right'></i>
+</a>
+</li>
+<li class='nav-item'>
+<a class='nav-link' href='./flocking.html'>
+Flocking Research
+<i class='fas fa-angle-right'></i>
+</a>
+</li>
+</ul>
+<div class='text-center text-white mt-5'>Team</div>
+<ul class='member-list'>
+<li class='text-muted'>Kevin Boese, kmboese@ucdavis.edu</li>
+<li class='text-muted'>Dasha Semyonova, dsemyonova@ucdavis.edu</li>
+<li class='text-muted'>Christine Tech, cbtech@ucdavis.edu</li>
+<li class='text-muted'>Nathan Telles, ndtelles@ucdavis.edu</li>
+</ul>
+
+</div>
+<div class='col-9 content'>
+<div class='container'>
+<h1 id="flocking-kevin">Flocking - Kevin</h1>
+<h2 id="advanced-pathing-for-units-in-starcraft-2">Advanced pathing for units in Starcraft 2</h2>
+<h4 id="definiton-what-is-flocking-">Definiton: What is flocking?</h4>
+<p>Flocking is a group pathing algorithm that creates movement vectors for a set of
+units based on their proximity to neighboring units, their movement vector, and
+neighboring unit movement vectors. It is inspired by actual movement of
+organisms in nature such as birds or bacteria, which move as a cohesive unit
+and avoid collision with their neighbors. The basic terminology as it applies
+to Starcraft 2 is as follows:</p>
+<ul>
+<li>Agent: a single unit</li>
+<li>Velocity vector: a unit&#39;s movement speed and direction of movement</li>
+<li>Neighborhood: a radius around a unit to look for other units</li>
+<li>Resultant: The movement vector obtained based on path calculations</li>
+</ul>
+<p>Several calculations can be performed based on data from the game API such as
+unit location, movement speed, unit size, and neighbor unit movement. There are
+three main methods that are used to provide a flocking implementation:</p>
+<h3 id="1-alignment">1. Alignment</h3>
+<p>Alignment is a method that makes units in a group face the same direction as
+other nearby units. This will result in an alignment vector that will be
+applied to all units in a group. In terms of Starcraft 2, we can access units&#39;
+direction directly using the <code>Unit</code> object fields and apply this to a
+chosen unit. We can use the <code>facing</code> attribute from <code>sc2_unit.h</code> to
+get the direction each neighboring unit is facing. Then we can sum up the
+movement speeds of units neighboring a given unit, based on the <code>radius</code>
+attribute of the unit. It may be necessary to set the neighborhood radius
+slightly larger than that of the given unit to prevent it from bumping into
+larger units, like a marine running into a siege tank, for instance.</p>
+<p>Once all the unit movement speeds and directions have been summed, we divide
+this summed vector <code>v</code> by the number of neighboring units, then normalize
+the vector, which we can do using <code>Normalize2D()</code>, defined in
+<code>sc2_common.h</code>. We will not worry about
+z-values for units for now, but such functionality could be added if we want
+to have mixed groups of ground and air units in the future.</p>
+<h3 id="2-cohesion">2. Cohesion</h3>
+<p>To implement cohesion, we can simply collect the x and y positions of all units
+in our defined group, sum up their x and y values, and then divide by the total
+number of units in the group to find a group centroid value. For all units
+<code>unit</code>  in our group with position <code>pos</code>, we would have:</p>
+<pre><code class="lang-c++"><span class="hljs-keyword">for</span> (auto unit : units) {
+sum_x += unit.pos.x;
+sum_y += unit.pos.y;
+unit_count++;
+}
+Point2D <span class="hljs-keyword">centroid</span>{};
+<span class="hljs-keyword">centroid</span>.x = sum_x / unit_count;
+<span class="hljs-keyword">centroid</span>.y = sum_y / unit_count;
+<span class="hljs-built_in">normalize</span>(<span class="hljs-keyword">centroid</span>); <span class="hljs-comment">//normalize the centroid</span>
+</code></pre>
+<h3 id="3-separation">3. Separation</h3>
+<p>The last step in our basic flocking implementation will be separation, which is
+the property that prevents units from colliding with neighboring units. To
+implement this, for each unit <code>u</code> we will calculate its distance from its
+neighboring units <code>n</code> and create a vector from this data that will
+essentially &quot;push&quot; <code>u</code> away from its neighbors as it moves to keep units
+from becoming too tightly packed together. Once again, we can use a pre-defined
+unit radius to determine which units are considered neighbors of <code>u</code>. We can
+implement it as follows:</p>
+<pre><code class="lang-c++"><span class="hljs-built_in">vector</span>&lt;<span class="hljs-keyword">float</span>&gt; sep_vec{<span class="hljs-number">0</span>, <span class="hljs-number">0</span>};
+<span class="hljs-comment">//Unit u already exists</span>
+<span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span> neighbor : neighbors) {
+sep_vec[<span class="hljs-number">0</span>] += neighbor.pos.x - u.pos.x; <span class="hljs-comment">// x-value</span>
+sep_vec[<span class="hljs-number">1</span>] += neighbor.pos.y - u.pos.y; <span class="hljs-comment">// y-value</span>
+}
+<span class="hljs-comment">//Flip the vector's direction to keep a unit *away* from its neighbors</span>
+sep_vec[<span class="hljs-number">0</span>] *= <span class="hljs-number">-1</span>;
+sep_vec[<span class="hljs-number">0</span>] *= <span class="hljs-number">-1</span>;
+</code></pre>
+<h3 id="summary">Summary</h3>
+<p>These 3 methods will give us a foundation for a basic flocking implementation
+using the SC2 C++ API. This will guide how our friendly units move in formation,
+while influence maps will guide our units away from enemies, and A* will provide
+the basic routing between 2 points. The combination of all of these techniques
+should give us a group pathing system that is more robust than the default
+pathing implementation given in the standard game, and should allow us to better
+minimize the damage a group of friendly units takes when their path coincides
+with enemy units.</p>
+<p>Some potential additions that would make our flocking more advanced:</p>
+<ul>
+<li>Z values: take into account the z-axis as well to allow for flying units to
+flock and to effectively ignore the formation of ground troops below it (since
+air units and ground units do not collide).</li>
+<li>Context-sensitivity: there are many situations in-game where we would want to
+alter the formation of our friendly units based on the enemy units it sees. One
+of the most fundamental examples of this is Terran marines and Zerg banelings:
+an intelligent AI would split a flock of marines/other bio units upon seeing a
+group of banelings close enough to interact with our group of friendly units and
+cause splash damage. There are potentially hundreds of such scenarios in-game,
+and it would be a large amount of work to implement even the highest priority of
+these interactions.</li>
+</ul>
+<h4 id="references">References</h4>
+<ol>
+<li><a href="https://gamedevelopment.tutsplus.com/tutorials/3-simple-rules-of-flocking-behaviors-alignment-cohesion-and-separation--gamedev-3444">3 Simple Rules of Flocking Behaviors</a></li>
+<li><a href="https://www.red3d.com/cwr/boids/">Boids</a></li>
+</ol>
+
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

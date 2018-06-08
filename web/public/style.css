@@ -1,0 +1,56 @@
+@import url("https://fonts.googleapis.com/css?family=Press+Start+2P");
+/* line 3, ../sass/style.scss */
+html {
+  height: 100%;
+}
+
+/* line 7, ../sass/style.scss */
+body {
+  min-height: 100%;
+}
+
+/* line 11, ../sass/style.scss */
+.logo {
+  font-family: 'Press Start 2P', cursive;
+  text-align: center;
+  color: white;
+  font-size: 64px;
+  line-height: 0.8;
+}
+
+/* line 19, ../sass/style.scss */
+.sc2-logo {
+  margin-top: -37px;
+}
+
+/* line 23, ../sass/style.scss */
+.sidebar {
+  background-color: #2e344a;
+  padding-top: 75px;
+  box-shadow: #777 6px 0px 25px;
+}
+
+/* line 30, ../sass/style.scss */
+.content {
+  padding-top: 50px;
+  height: 100vh;
+  overflow-y: scroll;
+}
+
+/* line 36, ../sass/style.scss */
+.nav-link {
+  color: white;
+  font-size: 28px;
+  padding: 0;
+}
+
+/* line 42, ../sass/style.scss */
+.c23 {
+  max-width: 100% !important;
+  padding: 0 !important;
+}
+
+/* line 47, ../sass/style.scss */
+.member-list li {
+  font-size: 16px;
+}

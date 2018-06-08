@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css?family=Press+Start+2P');
+
+html {
+    height: 100%;
+}
+
+body {
+    min-height: 100%;
+}
+
+.logo {
+    font-family: 'Press Start 2P', cursive;
+    text-align: center;
+    color: white;
+    font-size: 64px;
+    line-height: 0.8;
+}
+
+.sc2-logo {
+    margin-top: -37px;
+}
+
+.sidebar {
+    background-color: #2e344a;
+    // height: 100vh;
+    padding-top: 75px;
+    box-shadow: #777 6px 0px 25px;
+}
+
+.content {
+    padding-top: 50px;
+    height: 100vh;
+    overflow-y: scroll;
+}
+
+.nav-link {
+    color: white;
+    font-size: 28px;
+    padding: 0;
+}
+
+.c23 {
+    max-width: 100% !important;
+    padding: 0 !important;
+}
+
+.member-list li {
+    font-size: 16px;
+}

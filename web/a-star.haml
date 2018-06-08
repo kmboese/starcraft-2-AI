@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+%html
+  = Haml::Engine.new(File.read('./partials/head.haml')).render
+  %body
+    .container-fluid
+      .row
+        .col-3.sidebar
+          = Haml::Engine.new(File.read('./partials/sidebar.haml')).render
+        .col-9.content
+          .container
+            = Haml::Engine.new(File.read('./docs/AStar.html')).render
