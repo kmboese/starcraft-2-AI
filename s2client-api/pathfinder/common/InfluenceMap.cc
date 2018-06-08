@@ -7,7 +7,7 @@
 
 #include "InfluenceMap.h"
 
-#define INF std::numeric_limits<int>::max()
+#define NEG_INF std::numeric_limits<int>::min()
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 // Maximum influence assuming influence map only deals with positive values
@@ -45,7 +45,7 @@ void InfluenceMap::initMap() {
     // Rows correspond to y-axis; columns correspond to x-axis.
     for (unsigned int row = 0; row < infMap.size(); ++row) {
         for (unsigned int col = 0; col < infMap[row].size(); ++col) {
-            infMap[row][col] = INF;
+            infMap[row][col] = NEG_INF;
         }
     }
 } // end initMap()
@@ -53,8 +53,6 @@ void InfluenceMap::initMap() {
 
 void InfluenceMap::createSource(Point pt, float rad) {
     InfluenceSource src(pt, rad);
-
-    // int roundedRadius = round(src.radius);
 
     /* Find bounds of source. Rows correspond to y-axis; columns correspond to
         x-axis. */
@@ -121,7 +119,57 @@ void InfluenceMap::updateAllSources(const std::vector<InfluenceSource> srcs) {
 
     // Update sources vector
     sources = srcs;
-}
+
+    for (unsigned int k = 0; k < sources.size(); ++k) {
+        /* Find bounds of source. Rows correspond to y-axis; columns correspond
+         to x-axis. */
+        int minX = floor(sources[k].pt.x - sources[k].radius);
+        int minY = floor(sources[k].pt.y - sources[k].radius);
+        int maxX = round(sources[k].pt.x + sources[k].radius);
+        int maxY = round(sources[k].pt.y + sources[k].radius);
+
+        if (minX > maxX || minY > maxY) {
+            std::cerr << "Invalid influence source in updateAllSources\n" << std::endl;
+            exit(0);
+        }
+
+        // Translate vector 2d grid into Cartesian plane.
+        for (int i = maxY; i >= minY; --i) { // rows: y
+            /* Radius out of bounds. Should exit since further calculations will
+             not be saved. */
+            if (i < 0) {
+                break;
+            }
+
+            // Radius out of bounds. Continue until hit first element in map.
+            if ((unsigned int)i >= infMap.size()) {
+                continue;
+            }
+
+            for (int j = minX; j <= maxX; ++j) { // cols: x
+                if (j >= 0 && (unsigned int)j >= infMap[i].size()) {
+                    break;
+                }
+
+                if (j < 0) {
+                    continue;
+                }
+
+                /* If distance from point to center is leq the radius of the circle,
+                initialize the circle. */
+                int x_coor = sources[k].pt.x - j;
+                int y_coor = i - sources[k].pt.y;
+                if ((int_pow(x_coor, 2) + int_pow(y_coor, 2)) 
+                    <= int_pow(sources[k].radius, 2))
+                {
+                    // Need to convert i for Cartesian plane
+                    int converted_i = infMap.size() - 1 - i;
+                    infMap[converted_i][j] = 0;
+                }
+            }
+        }
+    } // end for all sources
+} // end updateAllSources()
 
 unsigned int InfluenceMap::getNumRows() {
     return infMap.size();
@@ -205,7 +253,7 @@ std::vector<Point> InfluenceMap::calcCells(const InfluenceSource &src) {
 
 void InfluenceMap::propagate(float decay) {
     // Calculated influence
-    float calculatedInf = INF;
+    float calculatedInf = NEG_INF;
 
     for (unsigned int i = 0; i < getNumSources(); ++i) {
         std::vector<Point> cells = calcCells(sources[i]);
@@ -213,10 +261,9 @@ void InfluenceMap::propagate(float decay) {
             int x = cells[j].x;
             int y = cells[j].y;
 
-            // Multiply the current influence value with the exponential decay
-            //  value based in the cell's distance. Set previous influence to 1
-            //  on first propagation and to avoid multiplying by 0; may cause
-            //  incorrect values after more than 1 propagation...
+            /* Multiply the current influence value with the exponential decay
+              value based in the cell's distance. Set previous influence to 1
+              on first propagation and to avoid multiplying by 0 */
             float prevInf = infMap[x][y];
             if (prevInf == 0) {
                 prevInf = 1;
@@ -239,9 +286,6 @@ void InfluenceMap::updateMap(const std::vector<InfluenceSource> srcs,
 
     // Update sources vector with new location
     updateAllSources(srcs);
-
-    // Create new sources in influence map using new updated sources vector
-    createMultSources(sources);
 
     // Propagate map
     propagate(decay);
