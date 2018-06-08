@@ -16,6 +16,8 @@ const float UNIT_RADIUS = 1.0f;
 const float POINT_RADIUS = 2.0f;
 //Radius marines must be away from each other
 const float SEPARATION_RADIUS = 1.0f;
+//Multiplier for separation of units
+const float SEPARATION_MULT = 5.0f;
 //Radius marines must be away from their centroid
 const float CENTROID_RADIUS = 2.0f;
 //Radius within which the leader is considered to have reached the goal
@@ -59,7 +61,7 @@ private:
         * Selects one random unit from a group of units to be the group leader
         * Returns: a pointer to the leader Unit
     */
-    const Unit* SelectLeader(const Units& units);
+    const Unit* SelectLeader(const Units& units, Point2D& goal);
 
     /* ***** Location Functions ***** */
     //Returns the center point of the playable map space
@@ -99,9 +101,6 @@ bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Poi
  * Returns: true if the path was successfully initialized, false otherwise
 */
 bool InitPath(AStarPathFinder& pathfinder, Point2DI& start, Point2DI& goal, std::vector<Point2DI>& path);
-
-//Returns the center point of a group of units
-Point2D GetCentroid(const Units& units);
 //Returns true if a unit is within a certain distance from a point
 bool IsNear(const Unit* unit, Point2D p, float radius);
 //Returns true if the leader of the group is near the goal point
