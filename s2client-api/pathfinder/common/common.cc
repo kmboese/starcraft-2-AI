@@ -71,7 +71,7 @@ void PathingBot::OnStep() {
     const ObservationInterface* obs = Observation();
     const GameInfo& game_info = obs->GetGameInfo();
     uint32_t game_loop = obs->GetGameLoop();
-    uint32_t pathing_freq = 5; //How often we run our algorithm
+    uint32_t pathing_freq = 3; //How often we run our algorithm
     uint32_t info_freq = 10; //How often we print game info
     uint32_t update_freq = 10; //How often we update game info
     uint32_t sep_freq = pathing_freq / 1; //how often we spread out the marines
@@ -112,8 +112,8 @@ void PathingBot::OnStep() {
         //End the game after the goal is reached
         else {
             Separate(this, marines);
-            std::cout << "Position of leader:\n";
-            PrintPoint2D(leader->pos);
+            //std::cout << "Position of leader:\n";
+            //PrintPoint2D(leader->pos);
         }
     }
     //Keep the marines regularly separated out, once centered
@@ -254,12 +254,12 @@ bool PathLeader(Agent *bot, const Unit* leader, std::vector<Point2DI>& path) {
     else if (!IsNear(leader, next_point, TILE_RADIUS)) {
         bot->Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
         float dist = Distance2D(leader->pos, next_point);
-        std::cout << "\tDEBUG: leader is " << dist << " away from the next point\n";
+        //std::cout << "\tDEBUG: leader is " << dist << " away from the next point\n";
         return false;
     }
     //Otherwise, save and remove the next path location from the path and move the leader to it
     else {
-        std::cout << "\tDEBUG: leader is moving to next point...\n";
+        //std::cout << "\tDEBUG: leader is moving to next point...\n";
         PrintPoint2D(next_point);
         next_point = ConvertToPoint2D(path.back());
         path.pop_back();
@@ -269,32 +269,33 @@ bool PathLeader(Agent *bot, const Unit* leader, std::vector<Point2DI>& path) {
 }
 
 bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Point2DI>& path) {
+    float offset_mult = 7.0f;
     Point2D move_location = next_point; //next_point plus a separation modifier
-    float mult = 6.0f; // separation modifier
     if (outPath.size() == 0) {
         return false;
     }
     else if (!IsNear(leader, next_point, TILE_RADIUS)) {
         float dist = Distance2D(leader->pos, next_point);
-        std::cout << "\tDEBUG: leader is " << dist << " away from the next point\n";
-        PrintPoint2D(next_point);
+        //std::cout << "\tDEBUG: leader is " << dist << " away from the next point\n";
+        //PrintPoint2D(next_point);
         //MoveUnits(bot, units, next_point);
         for (const auto& unit : units) {
             //if (!IsNear(unit, leader->pos, UNIT_RADIUS) && (unit != leader) ) {
             if (unit != leader) {
-                Point2D offset = GetNeighborsDistance(unit, units);
-                move_location.x += mult * offset.x;
-                move_location.y += mult * offset.y;
+                Point2D offset = GetNeighborsOffset(unit, units, unit->radius);
+                offset *= offset_mult;
+                move_location += offset;
                 bot->Actions()->UnitCommand(unit, ABILITY_ID::MOVE, move_location);
             }
             else {
+                //std::cout << "\tDEBUG: leader not separating\n";
                 bot->Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
             }
         }
         return false;
     }
     else {
-        std::cout << "\tDEBUG: moving group to the next point...\n";
+        //std::cout << "\tDEBUG: moving group to the next point...\n";
         PrintPoint2D(next_point);
         next_point = ConvertToPoint2D(path.back());
         path.pop_back();
@@ -303,12 +304,13 @@ bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Poi
         for (const auto& unit : units) {
             //if (!IsNear(unit, leader->pos, UNIT_RADIUS) && (unit != leader) ) {
             if (unit != leader) {
-                Point2D offset = GetNeighborsDistance(unit, units);
-                move_location.x += mult * offset.x;
-                move_location.y += mult * offset.y;
+                Point2D offset = GetNeighborsOffset(unit, units, unit->radius);
+                offset *= SEPARATION_MULT;
+                move_location += offset;
                 bot->Actions()->UnitCommand(unit, ABILITY_ID::MOVE, move_location);
             }
             else {
+                //std::cout << "\tDEBUG: leader not separating\n";
                 bot->Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
             }
         }
@@ -331,22 +333,6 @@ bool InitPath(AStarPathFinder& pathfinder, Point2DI& start, Point2DI& goal, std:
         std::cout << "Failed to find path" << std::endl;
         return false;
     }
-}
-
-Point2D GetCentroid(const Units& units) {
-    Point2D centroid{0.0, 0.0};
-    if (units.size() == 0) {
-        return centroid;
-    }
-    //Sum up all unit x and y positions
-    for (const auto &unit : units) {
-        centroid.x += unit->pos.x;
-        centroid.y += unit->pos.y;
-    }
-    //Divide centroid location by total number of units
-    centroid.x /= units.size();
-    centroid.y /= units.size();
-    return centroid;
 }
 
 bool IsNear(const Unit* unit, Point2D p, float radius) {
