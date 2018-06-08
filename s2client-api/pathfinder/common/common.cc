@@ -54,17 +54,6 @@ void PathingBot::OnGameStart() {
     //Pick a leader and flock units on initialization
     leader = SelectLeader(marines);
     Flock(this, marines, leader, center);
-
-    //Initialize path finding
-    //DPS _BEG
-    //======================================
-    //path finder
-    //DPS_PrintObservation("OnGBeg", obs);
-
-
-    //======================================
-
-    //DPS END
 }
 
 void PathingBot::OnStep() {
@@ -118,10 +107,6 @@ void PathingBot::OnStep() {
     }
     //Keep the marines regularly separated out, once centered
     if ((game_loop % sep_freq == 0) && separated && (!goal_reached)) {
-        //std::cout << "\t\tSeparation loop entered!" << std::endl;
-        //Flock(this, marines, leader, goal);
-        //Separate(this, marines);
-        //MoveFromCentroid(this, marines);
     }
     //Update info
     if (game_loop % update_freq == 0) {
@@ -131,11 +116,6 @@ void PathingBot::OnStep() {
     }
     //Print Info
     if (game_loop % info_freq == 0) {
-        //Print game info
-        /*
-        std::cout << "Centroid location: (" << GetCentroid(marines).x << "," << GetCentroid(marines).y
-            << ")\n";
-        */
         if (group_damaged) {
             std::cout << "Group health: " << group_health << "\n";
         }
