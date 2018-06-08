@@ -258,7 +258,6 @@ void InfluenceMap::propagate(float decay) {
 
     for (unsigned int i = 0; i < getNumSources(); ++i) {
         std::vector<Point> cells = calcCells(sources[i]);
-        std::cout << "\tDEBUG: cells.size() == " << cells.size() << "\n";
         for (unsigned int j = 0; j < cells.size(); ++j) {
             int x = cells[j].x;
             int y = cells[j].y;
