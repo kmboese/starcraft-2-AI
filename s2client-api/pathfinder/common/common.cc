@@ -80,8 +80,6 @@ InfluenceMap* CreateInfluenceMapEnemy(const ObservationInterface* obs)
     {
         const Unit* unit = *it;
         Point pt((int)unit->pos.x, (int)unit->pos.y);
-        std::cout << "Point: (" << pt.x << ", " << pt.y << ") Radius: [" << unit->radius << ")\n";
-        //InfluenceSource is(pt, 3.0f);
         InfluenceSource is(pt, 7.0f);
         infRoaches.push_back(is);
     }
@@ -93,11 +91,7 @@ InfluenceMap* CreateInfluenceMapEnemy(const ObservationInterface* obs)
     InfluenceMap* pMap = new  InfluenceMap(height, width);
     pMap->initMap();
     pMap->createMultSources(infRoaches);
-
-    
-
     pMap->propagate(0.5);
-    //pMap->printMap();
     return pMap;
 }
 
