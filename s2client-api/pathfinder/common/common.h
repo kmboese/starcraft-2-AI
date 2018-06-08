@@ -101,9 +101,6 @@ bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Poi
  * Returns: true if the path was successfully initialized, false otherwise
 */
 bool InitPath(AStarPathFinder& pathfinder, Point2DI& start, Point2DI& goal, std::vector<Point2DI>& path);
-
-//Returns the center point of a group of units
-Point2D GetCentroid(const Units& units);
 //Returns true if a unit is within a certain distance from a point
 bool IsNear(const Unit* unit, Point2D p, float radius);
 //Returns true if the leader of the group is near the goal point
