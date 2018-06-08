@@ -288,7 +288,6 @@ bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Poi
         float dist = Distance2D(leader->pos, next_point);
         //std::cout << "\tDEBUG: leader is " << dist << " away from the next point\n";
         //PrintPoint2D(next_point);
-        //MoveUnits(bot, units, next_point);
         for (const auto& unit : units) {
             //if (!IsNear(unit, leader->pos, UNIT_RADIUS) && (unit != leader) ) {
             if (unit != leader) {
@@ -298,7 +297,6 @@ bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Poi
                 bot->Actions()->UnitCommand(unit, ABILITY_ID::MOVE, move_location);
             }
             else {
-                //std::cout << "\tDEBUG: leader not separating\n";
                 bot->Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
             }
         }
@@ -310,7 +308,6 @@ bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Poi
         //PrintPoint2D(next_point);
         next_point = ConvertToPoint2D(path.back());
         path.pop_back();
-        //MoveUnits(bot, units, next_point);
         //move units with a separation offset
         for (const auto& unit : units) {
             //if (!IsNear(unit, leader->pos, UNIT_RADIUS) && (unit != leader) ) {
@@ -321,7 +318,6 @@ bool PathAll(Agent* bot, const Unit* leader, const Units& units, std::vector<Poi
                 bot->Actions()->UnitCommand(unit, ABILITY_ID::MOVE, move_location);
             }
             else {
-                //std::cout << "\tDEBUG: leader not separating\n";
                 bot->Actions()->UnitCommand(leader, ABILITY_ID::MOVE, next_point);
             }
         }
