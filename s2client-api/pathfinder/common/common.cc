@@ -353,7 +353,7 @@ bool InitPath(AStarPathFinder& pathfinder, Point2DI& start, Point2DI& goal, std:
         //Reverse the vector for use in pathing units
         std::reverse(path.begin(), path.end());
         //print output path 
-        PrintBestPath(outPath);
+        //PrintBestPath(outPath);
         //Initialize the first point to move to
         next_point = ConvertToPoint2D(outPath.back());
         return true;
