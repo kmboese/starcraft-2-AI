@@ -7,7 +7,7 @@
 
 #include "InfluenceMap.h"
 
-#define NEG_INF std::numeric_limits<int>::min()
+#define NEG_INF std::numeric_limits<float>::min()
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 // Maximum influence assuming influence map only deals with positive values
@@ -30,7 +30,7 @@ InfluenceMap::InfluenceMap(int y_rows, int x_cols) {
         exit(0);
     }
 
-    std::vector<std::vector<float> > infMap;
+    std::vector<std::vector<float> > infMap{};
     
     for (int i = 0; i < y_rows; ++i) {
         std::vector<float> column(x_cols);
@@ -257,6 +257,7 @@ void InfluenceMap::propagate(float decay) {
 
     for (unsigned int i = 0; i < getNumSources(); ++i) {
         std::vector<Point> cells = calcCells(sources[i]);
+        std::cout << "\tDEBUG: cells.size() == " << cells.size() << "\n";
         for (unsigned int j = 0; j < cells.size(); ++j) {
             int x = cells[j].x;
             int y = cells[j].y;
@@ -273,7 +274,8 @@ void InfluenceMap::propagate(float decay) {
                 cells[j], decay);
 
             // Cap the influence
-            infMap[x][y] += MIN(calculatedInf, maxInf);
+            //infMap[x][y] += MIN(calculatedInf, maxInf);
+            infMap[x][y] = 10.0f;
         }
     }
 } // end propagate()
@@ -293,14 +295,14 @@ void InfluenceMap::updateMap(const std::vector<InfluenceSource> srcs,
 
 void InfluenceMap::printMap() {
     std::vector< std::vector<float> >::const_iterator row;
-    std::vector<float>::const_iterator col;
+    //std::vector<float>::const_iterator col;
 
     std::cout << "Rows: " << getNumRows() << std::endl;
     std::cout << "Columns: " << getNumCols() << "\n" << std::endl;
     
     for (row = infMap.begin(); row != infMap.end(); ++row) {
-        for (col = row->begin(); col != row->end(); ++col) {
-            std::cout << " | " << *col << " | ";
+        for (auto col : *row) {
+            std::cout << " | " << col << " | ";
         }
         std::cout << std::endl;
     }

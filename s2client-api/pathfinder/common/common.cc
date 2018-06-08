@@ -24,6 +24,9 @@ bool separated = false; //indicates the group has been separated out
 bool path_initialized = false; //indicates the initial A* path has been created
 bool goal_reached = false; //indicates the group of units has reached its goal.
 
+//Other
+bool pathfinder_constructed = false;
+
 PathingBot::PathingBot() : mpPathFinder(NULL) {}
 
 PathingBot::~PathingBot()
@@ -86,13 +89,14 @@ InfluenceMap* CreateInfluenceMapEnemy(const ObservationInterface* obs)
     int width = game_info.pathing_grid.width;
     int height = game_info.pathing_grid.height;
 
-    InfluenceMap* pMap = new  InfluenceMap(width, height);
+    InfluenceMap* pMap = new  InfluenceMap(height, width);
     pMap->initMap();
     pMap->createMultSources(infRoaches);
 
-    //pMap->printMap();
+    
 
-    pMap->propagate(0.5);
+    //pMap->propagate(0.5);
+    pMap->printMap();
     return pMap;
 }
 
@@ -107,11 +111,13 @@ void PathingBot::OnStep() {
     uint32_t sep_freq = pathing_freq / 1; //how often we spread out the marines
     Point2D center = GetMapCenter();
 
-    if (!mpPathFinder)
+    //if (!mpPathFinder)
+    if (!pathfinder_constructed)
     {
         mpPathFinder = new AStarPathFinder(game_info, true); //pathFinder object for A*
         InfluenceMap* pInfMap = CreateInfluenceMapEnemy(obs);  //got influence map from somewhere
         mpPathFinder->AddInfluenceMap(pInfMap); //add influence map
+        pathfinder_constructed = true;
     }
 
     //Update Info
