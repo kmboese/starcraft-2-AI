@@ -126,5 +126,6 @@ extern const char* kMapEmptyTall;
 extern const char* kMapMarineMicro;
 extern const char* kMapPathfinder;
 extern const char* kMapPathfinderV2;
+extern const char* kMapPathfinderV3;
 
 }
